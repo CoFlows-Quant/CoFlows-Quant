@@ -1679,7 +1679,17 @@ type PortfolioStrategy =
                                                 if weightMap.Count = 0 then
                                                     weightMap
                                                 else
-                                                    let days_window = 20
+
+                                                    let days_window = match rebalancing with
+                                                        | 0 -> 1 //Every day
+                                                        | -1 -> 5 //Last day of the week
+                                                        | x when (x > 0 && x < 32) -> 20 //x Business Day of the month
+                                                        | 32 -> 20 //Last day of the month
+                                                        | 33 -> 20 * 3
+                                                        | 34 -> 252
+                                                        | _ -> 1
+
+                                                    let days_window_ = 20
                                                     let days_back = 252
                                                     let level = 0.99
                                                     let level = 1.0 - level
@@ -1726,22 +1736,27 @@ type PortfolioStrategy =
                                                                     let idx = ts.GetClosestDateIndex(orderDate.DateTime, TimeSeries.DateSearchType.Previous)
                                                                     let scale = (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
 
+                                                                    let instrument_value = instrument.[orderDate.DateTime, TimeSeriesType.Last, TimeSeriesRollType.Last] * scale
+                                                                    let unit = weightMap.[instrument.ID] * reference_aum / instrument_value
+                            
+
                                                                     [|1 .. days_back|] |> Array.map (fun i ->
                                                                         let first = Math.Max(0, idx - days_back + i - days_window)
-                                                                        let last = Math.Min(ts.Count - 1, Math.Max(0, idx - days_back + i))
+                                                                        let last = Math.Max(0, idx - days_back + i)
+                                                                        
                                                                         let fx_t = CurrencyPair.Convert(1.0, ts.DateTimes.[last], TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, this.Portfolio.Currency, instrument.Currency)
                                                                         let fx_0 = CurrencyPair.Convert(1.0, ts.DateTimes.[first], TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, this.Portfolio.Currency, instrument.Currency)
                                                                         let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
                                     
-                                                                        ret * scale * (weightMap.[instrument.ID] * reference_aum) / (fx_t * ts.[last] * scale)))
+                                                                        ret * unit * scale
+                                                                        ))
                                     
-                                                        //let rets = returnsList|> List.fold (fun (acc : float list) rets -> [1 .. 252] |> List.map( fun j -> acc.[j - 1] + rets.[j - 1])) (Array.zeroCreate 252 |> Array.toList) |> List.sort
                                                         let rets = returnsList |> Array.fold (fun (acc : float[] ) rets -> [|1 .. days_back|] |> Array.map( fun j -> acc.[j - 1] + rets.[j - 1])) (Array.zeroCreate days_back) |> Array.sort
                                                         let pctl = 0.01 * (double (rets.Length - 1)) + 1.0;
                                                         let pctl_n = (int)pctl
                                                         let pctl_d = pctl - (double)pctl_n
                                                         let VaR = (rets.[pctl_n] + pctl_d * (rets.[pctl_n + 1] - rets.[pctl_n])) / reference_aum
-                                                
+
                                                         if (VaR <= TargetVAR) then                        
                                                             let max_var_scale = TargetVAR / VaR
                                                             let newWeights = weights |> List.mapi(fun i w -> w * max_var_scale)                                            
@@ -1855,7 +1870,17 @@ type PortfolioStrategy =
         if this.InitialDate = DateTime.MinValue then
             this.InitialDate <- ts.DateTimes.[0]
 
-        let days_back = (int)this.[t, (int)AQI.AQILabs.SDK.Strategies.MemoryType.DaysBack]
+        let days_back = (int)this.Portfolio.MasterPortfolio.Strategy.[t, (int)AQI.AQILabs.SDK.Strategies.MemoryType.DaysBack]
+        let rebalancing = (int)this.Portfolio.MasterPortfolio.Strategy.[t, (int)MemoryType.RebalancingFrequency, TimeSeriesRollType.Last]
+
+        let days_window = match rebalancing with
+            | 0 -> 1 //Every day
+            | -1 -> 5 //Last day of the week
+            | x when (x > 0 && x < 32) -> 20 //x Business Day of the month
+            | 32 -> 20 //Last day of the month
+            | 33 -> 20 * 3
+            | 34 -> 252
+            | _ -> 1
 
         let rec strategy_pkg (strategy : Strategy) : StrategyPkg_v1 =
             let instruments : InstrumentPkg_v1 list = 
@@ -1884,7 +1909,7 @@ type PortfolioStrategy =
 
                     let ts = i.GetTimeSeries(if i.InstrumentType = InstrumentType.ETF || i.InstrumentType = InstrumentType.Equity || i.InstrumentType = InstrumentType.Fund then TimeSeriesType.AdjClose else TimeSeriesType.Last)
                     let count = if ts = null then 0 else ts.Count
-                    
+
                     let rets = 
                         let index = if ts = null then 0 else ts.GetClosestDateIndex(t, AQI.AQILabs.Kernel.Numerics.Util.TimeSeries.DateSearchType.Previous)
                         let rts = if not(ts = null || ts.Count < 5) then ts.GetRange(Math.Max(0, index - days_back), index) else ts
@@ -1921,7 +1946,8 @@ type PortfolioStrategy =
                                     ProjectedUnit = if virpos.ContainsKey(i.ID) then virpos.[i.ID].Unit else 0.0
 
                                     Volatility = if rets = null then 0.0 else Math.Sqrt(rets.Variance * 252.0)
-                                    ValueAtRisk = Utils.VaRInstrument(i, t, strategy.Currency, 1, 60, 0.99)
+                                    ValueAtRisk = Utils.VaRInstrument(i, t, strategy.Currency, days_window, 252, 0.99)
+                                    // ValueAtRisk = Utils.VaRInstrument(i, t, strategy.Currency, 1, 60, 0.99)
                                     InformationRatio = if not(strategy :? PortfolioStrategy) then 0.0 else (strategy :?> PortfolioStrategy).InformationRatio(strategy.Calendar.GetClosestBusinessDay(t, TimeSeries.DateSearchType.Next), i, false)
                                     DrawDown = if ts = null || ts.Count < 5 then 0.0 else ts.[count - 1] / ts.Maximum - 1.0
         
@@ -2232,7 +2258,7 @@ type PortfolioStrategy =
                         CurrentRisk = 
                             {
                                 Volatility = Utils.Volatility(strategy, t, days_back, true)
-                                ValueAtRisk = Utils.VaR(strategy, t, 1, 60, 0.99, true)
+                                ValueAtRisk = Utils.VaR(strategy, t, 1, days_window, 0.99, true)
                                 InformationRatio = if not(strategy :? PortfolioStrategy) then 0.0 else (strategy :?> PortfolioStrategy).InformationRatio(strategy.Calendar.GetClosestBusinessDay(t, TimeSeries.DateSearchType.Previous), null, true)
                                 RiskNotional =
                                     strategy.Portfolio.Positions(t, true) 
@@ -2254,7 +2280,7 @@ type PortfolioStrategy =
                         ProjectedRisk =
                             {
                                 Volatility = Utils.Volatility(strategy, t, days_back, false)
-                                ValueAtRisk = Utils.VaR(strategy, t, 1, 60, 0.99, false)                                
+                                ValueAtRisk = Utils.VaR(strategy, t, days_window, 252, 0.99, false)                                
                                 InformationRatio = if not(strategy :? PortfolioStrategy) then 0.0 else (strategy :?> PortfolioStrategy).InformationRatio(strategy.Calendar.GetClosestBusinessDay(t, TimeSeries.DateSearchType.Previous), null, false)
                                 RiskNotional =
                                     strategy.Portfolio.PositionOrders(t, true).Values 
