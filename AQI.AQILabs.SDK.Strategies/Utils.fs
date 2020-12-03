@@ -496,29 +496,29 @@ module Utils =
         let ttrisk startI =
             let element =
                 [|startI .. i|]
-                |> Array.fold(fun element i -> 
+                |> Array.fold(
+                    fun element i -> 
+                        if not(element.Found) then
+                            let currentValue = ts.[i]
+                            let currentDate = ts.DateTimes.[i]
+                                                                
+                            let exposure = if exposure.IsSome then exposure.Value else 1.0
+                            let currentReturn = exposure * (currentValue / element.StartValue - 1.0)
                 
-                                if not(element.Found) then
-                                    let currentValue = ts.[i]
-                                    let currentDate = ts.DateTimes.[i]
-                                                                        
-                                    let exposure = if exposure.IsSome then exposure.Value else 1.0
-                                    let currentReturn = exposure * (currentValue / element.StartValue - 1.0)
-                        
-                                    let drawdownValue = Math.Min(currentReturn, element.DrawdownValue)
-                                    let drawdownDate = if drawdownValue = currentReturn then currentDate else element.DrawdownDate
+                            let drawdownValue = Math.Min(currentReturn, element.DrawdownValue)
+                            let drawdownDate = if drawdownValue = currentReturn then currentDate else element.DrawdownDate
 
-                                    let runningTime = (currentDate - element.StartDate).TotalDays / 365.0
-                                    
-                                    let minHoldingTime = if minHoldingTime.IsSome then minHoldingTime.Value else 0.0
-                                    if currentReturn >= targetReturn && minHoldingTime <= runningTime then //STOP                                            
-                                        { StartValue = element.StartValue; StartDate = element.StartDate; DrawdownValue = drawdownValue; DrawdownDate = drawdownDate; RealizedReturn = currentReturn; TargetDate = currentDate; LastDate =  currentDate; Found = true }//; Trajectory = None }
-                                    else
-                                        { StartValue = element.StartValue; StartDate = element.StartDate; DrawdownValue = drawdownValue; DrawdownDate = drawdownDate; RealizedReturn = currentReturn; TargetDate =  element.TargetDate; LastDate =  currentDate; Found = element.Found }//; Trajectory = None }
-                                else
-                                    element
+                            let runningTime = (currentDate - element.StartDate).TotalDays / 365.0
+                            
+                            let minHoldingTime = if minHoldingTime.IsSome then minHoldingTime.Value else 0.0
+                            if currentReturn >= targetReturn && minHoldingTime <= runningTime then //STOP                                            
+                                { StartValue = element.StartValue; StartDate = element.StartDate; DrawdownValue = drawdownValue; DrawdownDate = drawdownDate; RealizedReturn = currentReturn; TargetDate = currentDate; LastDate =  currentDate; Found = true }//; Trajectory = None }
+                            else
+                                { StartValue = element.StartValue; StartDate = element.StartDate; DrawdownValue = drawdownValue; DrawdownDate = drawdownDate; RealizedReturn = currentReturn; TargetDate =  element.TargetDate; LastDate =  currentDate; Found = element.Found }//; Trajectory = None }
+                        else
+                            element
 
-                        ) { StartValue = ts.[startI]; StartDate = ts.DateTimes.[startI]; DrawdownValue = 0.0; DrawdownDate = DateTime.MaxValue; RealizedReturn = 0.0; TargetDate = DateTime.MaxValue; LastDate =  DateTime.MaxValue; Found = false } //; Trajectory = None } //(ts.[startI], ts.DateTimes.[startI], 0.0, DateTime.MaxValue, 0.0, DateTime.MaxValue, false)
+                    ) { StartValue = ts.[startI]; StartDate = ts.DateTimes.[startI]; DrawdownValue = 0.0; DrawdownDate = DateTime.MaxValue; RealizedReturn = 0.0; TargetDate = DateTime.MaxValue; LastDate =  DateTime.MaxValue; Found = false } //; Trajectory = None } //(ts.[startI], ts.DateTimes.[startI], 0.0, DateTime.MaxValue, 0.0, DateTime.MaxValue, false)
             element
 
         let data_i = [|i - days_back .. i - 1|] |> Array.map(ttrisk)
@@ -797,13 +797,6 @@ module Utils =
             //let sum_adj = avg_vol / target_vol
 
             let floor = Math.Max(sum_max * (if sum_adj > 1.0 then (1.0 / sum_adj) else sum_adj), sum_min)
-//                if sum_adj >= 1.5 then
-//                    sum / sum_adj                                  
-//                elif sum_adj <= 0.5 then
-//                    sum * sum_adj                    
-//                else                
-//                    1.0
-            //Console.WriteLine("Global Floor: " + floor.ToString())
             constraints.Add(new NonlinearConstraint(tsl_count, fun (optimal_wgts : float[]) ->  (optimal_wgts |> Array.sum) - floor >= 0.0))
             constraints.Add(new NonlinearConstraint(tsl_count, fun (optimal_wgts : float[]) ->  (optimal_wgts |> Array.sum) - sum_max <= 0.0))
 
@@ -843,9 +836,7 @@ module Utils =
                 let th = new System.Threading.Thread(fun () ->                
                     //Console.WriteLine("Cobyla MV Start(" + (max_tries - num_tries).ToString()  + "): " + tsl_count.ToString() + " " + t1.ToString())
                     let success = cobyla.Minimize()
-//                    
                     let tt = DateTime.Now - t1
-//                    
                     //Console.WriteLine("Cobyla MV End(" + (max_tries - num_tries).ToString()  + "): " + tsl_count.ToString() + " " + cobyla.Iterations.ToString()+ " " + cobyla.Status.ToString() + " " + tt.ToString())
                     //if (cobyla.Status = CobylaStatus.NoPossibleSolution) then
                     //    Console.WriteLine("NO SOLUTION")
@@ -854,7 +845,8 @@ module Utils =
                 th.Start()
             
                 if not(th.Join(seconds_wait * 1000)) then // wait for x seconds then end...
-                    th.Abort()
+                    // th.Abort()
+                    th.Interrupt()
                     let tt = DateTime.Now - t1
                     Console.WriteLine("Cobyla MV Locked(" + (max_tries - num_tries).ToString()  + "): " + tsl_count.ToString() + " " + cobyla.Iterations.ToString()+ " " + cobyla.Status.ToString() + " " + tt.ToString())
                         
@@ -913,119 +905,127 @@ module Utils =
     let TimeSeriesMap (strategy : Strategy, instruments : seq<Instrument>, orderDate: BusinessDay, reference_aum : double, days_back : int, fx_hedge : bool, current: bool) =
         let max_log_chg = 0.5
         //let timeSeriesMapDirty = instruments
-        let timeSeriesMap = instruments
-                                |> Seq.filter (fun instrument -> // filter out reserve instruments and instruments without timeseries data
-                                    let ttype = if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Fund then TimeSeriesType.AdjClose else if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
-                                    
-                                    match instrument with
-                                    | x when x.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy && (strategy.Portfolio.IsReserve(instrument)) -> false
-                                    | x when x.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy && ((x :?> Strategy).IsResidual) -> false
-                                    | x when x.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy && (not ((x :?> Strategy).Portfolio = null)) ->                                        
-                                        Seq.toList ((instrument :?> Strategy).Instruments(orderDate.DateTime, true).Values)
-                                        |> List.filter (fun sub_instrument -> 
-                                            let sttype = if sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity || sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Fund then TimeSeriesType.AdjClose elif sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
-                                            let sub_ts = sub_instrument.GetTimeSeries(sttype)   
-                                                                                                                     
-                                            let idx = if sub_ts = null || sub_ts.Count = 0 then 0 else sub_ts.GetClosestDateIndex(orderDate.DateTime, TimeSeries.DateSearchType.Previous)                                            
-                                            
-                                            (not (strategy.Portfolio.IsReserve(sub_instrument))) && (idx > 5) && not(sub_ts = null)) |> List.length > 0 
-                                    | _ -> 
-                                        let ts_s = instrument.GetTimeSeries(ttype)
+        let timeSeriesMap = 
+            instruments
+            |> Seq.filter (fun instrument -> // filter out reserve instruments and instruments without timeseries data
+                let ttype = if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Fund then TimeSeriesType.AdjClose else if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
+                
+                match instrument with
+                | x when x.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy && (strategy.Portfolio.IsReserve(instrument)) -> false
+                | x when x.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy && ((x :?> Strategy).IsResidual) -> false
+                | x when x.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy && (not ((x :?> Strategy).Portfolio = null)) ->                                        
+                    Seq.toList ((instrument :?> Strategy).Instruments(orderDate.DateTime, true).Values)
+                    |> List.filter (fun sub_instrument -> 
+                        let sttype = if sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity || sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Fund then TimeSeriesType.AdjClose elif sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
+                        let sub_ts = sub_instrument.GetTimeSeries(sttype)   
+                                                                                                    
+                        let idx = if sub_ts = null || sub_ts.Count = 0 then 0 else sub_ts.GetClosestDateIndex(orderDate.DateTime, TimeSeries.DateSearchType.Previous)                                            
+                        
+                        (not (strategy.Portfolio.IsReserve(sub_instrument))) && (idx > 5) && not(sub_ts = null)) |> List.length > 0 
+                | _ -> 
+                    let ts_s = instrument.GetTimeSeries(ttype)
 
-                                        let ts_s_count = if not (ts_s = null) then ts_s.Count else 0
-                                        let idx_s = if ts_s_count > 0 then ts_s.GetClosestDateIndex(orderDate.DateTime, TimeSeries.DateSearchType.Previous) else 0                                                                
-                                        
-                                        (not (strategy.Portfolio.IsReserve(instrument)) && idx_s > 5 && not(ts_s = null)))
-                                
-                                |> Seq.groupBy (fun instrument -> instrument.ID)
-                                |> Map.ofSeq
-                                |> Map.map (fun id tuple ->                                                 // Generate timeseries
-                                    let instrument = Instrument.FindInstrument(id)
+                    let ts_s_count = if not (ts_s = null) then ts_s.Count else 0
+                    let idx_s = if ts_s_count > 0 then ts_s.GetClosestDateIndex(orderDate.DateTime, TimeSeries.DateSearchType.Previous) else 0                                                                
+                    
+                    (not (strategy.Portfolio.IsReserve(instrument)) && idx_s > 5 && not(ts_s = null)))
+            
+            |> Seq.groupBy (fun instrument -> instrument.ID)
+            |> Map.ofSeq
+            |> Map.map(
+                fun id tuple ->                                                 // Generate timeseries
+                    let instrument = Instrument.FindInstrument(id)
+                                                        
+                    let dateList = new System.Collections.Generic.List<DateTime>()
+                    [|0 .. days_back|] |> Array.iter(fun i -> dateList.Add(orderDate.AddBusinessDays(- days_back + i).DateTime))
+
+                    match instrument with
+                    | x when x.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy && (not ((x :?> Strategy).Portfolio = null)) ->
+                        let sub_strategy = x :?> Strategy
+                        let portfolio = sub_strategy.Portfolio
+                        let positions = 
+                                if current then
+                                    portfolio.Positions(orderDate.DateTime, true)
+                                    |> Seq.map(fun position -> (position.Instrument.ID, position.Unit))
+                                    |> Map.ofSeq
+                                else
+                                    portfolio.PositionOrders(orderDate.DateTime, true).Values
+                                    |> Seq.map(fun position -> (position.Instrument.ID, position.Unit))
+                                    |> Map.ofSeq
+
+                        let (ts, value) = 
+                            Seq.toList (strategy.Instruments(orderDate.DateTime, true))                                        
+                            |> List.filter (fun value -> 
+                                let instrument = value.Value
                                                                         
-                                    let dateList = new System.Collections.Generic.List<DateTime>()
-                                    [|0 .. days_back|] |> Array.iter(fun i -> dateList.Add(orderDate.AddBusinessDays(- days_back + i).DateTime))
+                                let sttype = if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Fund then TimeSeriesType.AdjClose elif instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
+                                let sub_ts = instrument.GetTimeSeries(sttype)                                
+                                let idx = if sub_ts = null || sub_ts.Count = 0 then 0 else sub_ts.GetClosestDateIndex(orderDate.DateTime, TimeSeries.DateSearchType.Previous)                                            
 
-                                    match instrument with
-                                    | x when x.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy && (not ((x :?> Strategy).Portfolio = null)) ->
-                                        let sub_strategy = x :?> Strategy
-                                        let portfolio = sub_strategy.Portfolio
-                                        let positions = 
-                                                if current then
-                                                    portfolio.Positions(orderDate.DateTime, true)
-                                                    |> Seq.map(fun position -> (position.Instrument.ID, position.Unit))
-                                                    |> Map.ofSeq
-                                                else
-                                                    portfolio.PositionOrders(orderDate.DateTime, true).Values
-                                                    |> Seq.map(fun position -> (position.Instrument.ID, position.Unit))
-                                                    |> Map.ofSeq
+                                (not (portfolio.IsReserve(instrument))) && ((idx > 1)))
+                                                                        
+                            |> List.map (fun value -> 
+                                let sub_instrument = value.Value
+                                let posval =(if positions.ContainsKey(sub_instrument.ID) then positions.[sub_instrument.ID] else 0.0)
+                                                                                                                                
+                                let ttype = if sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity || sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Fund then TimeSeriesType.AdjClose else if sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
+                                let ts_s = sub_instrument.GetTimeSeries(ttype)
+                                                                        
+                                let normalized_ts = new TimeSeries(dateList.Count, new DateTimeList(dateList))
+                                
+                                let date_ref = normalized_ts.DateTimes.[days_back]
+                                //let fx_ref = CurrencyPair.Convert(1.0, date_ref, TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, sub_instrument.Currency)
+                                let fx_ref = CurrencyPair.Convert(1.0, date_ref, strategy.Portfolio.Currency, sub_instrument.Currency)
+                                let subval_ref = sub_instrument.[date_ref, ttype, TimeSeriesRollType.Last] * (if Double.IsNaN(fx_ref) then 1.0 else fx_ref) * (if sub_instrument :? Security then (sub_instrument :?> Security).PointSize else 1.0)
 
-                                        let (ts, value) = 
-                                            Seq.toList (strategy.Instruments(orderDate.DateTime, true))                                        
-                                            |> List.filter (fun value -> 
-                                                let instrument = value.Value
-                                                                                        
-                                                let sttype = if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Fund then TimeSeriesType.AdjClose elif instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
-                                                let sub_ts = instrument.GetTimeSeries(sttype)                                
-                                                let idx = if sub_ts = null || sub_ts.Count = 0 then 0 else sub_ts.GetClosestDateIndex(orderDate.DateTime, TimeSeries.DateSearchType.Previous)                                            
+                                let wgt = subval_ref * posval / reference_aum
 
-                                                (not (portfolio.IsReserve(instrument))) && ((idx > 1)))
-                                                                                        
-                                            |> List.map (fun value -> 
-                                                let sub_instrument = value.Value
-                                                let posval =(if positions.ContainsKey(sub_instrument.ID) then positions.[sub_instrument.ID] else 0.0)
-                                                                                                                                                
-                                                let ttype = if sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity || sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Fund then TimeSeriesType.AdjClose else if sub_instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
-                                                let ts_s = sub_instrument.GetTimeSeries(ttype)
-                                                                                        
-                                                let normalized_ts = new TimeSeries(dateList.Count, new DateTimeList(dateList))
-                                                
-                                                let date_ref = normalized_ts.DateTimes.[days_back]
-                                                //let fx_ref = CurrencyPair.Convert(1.0, date_ref, TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, sub_instrument.Currency)
-                                                let fx_ref = CurrencyPair.Convert(1.0, date_ref, strategy.Portfolio.Currency, sub_instrument.Currency)
-                                                let subval_ref = sub_instrument.[date_ref, ttype, TimeSeriesRollType.Last] * (if Double.IsNaN(fx_ref) then 1.0 else fx_ref) * (if sub_instrument :? Security then (sub_instrument :?> Security).PointSize else 1.0)
+                        
+                                [|0 .. days_back|] 
+                                |> Array.iter(fun i ->                                                                                                                                                                                                                                                                                                                                 
+                                    let date = normalized_ts.DateTimes.[i]
+                                    //let fx = CurrencyPair.Convert(1.0, (if fx_hedge then orderDate.DateTime else date), TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, sub_instrument.Currency)
+                                    let fx = CurrencyPair.Convert(1.0, (if fx_hedge then orderDate.DateTime else date), strategy.Portfolio.Currency, sub_instrument.Currency)
+                                    let subval = sub_instrument.[date, ttype, TimeSeriesRollType.Last] * (if Double.IsNaN(fx) then 1.0 else fx) * (if sub_instrument :? Security then (sub_instrument :?> Security).PointSize else 1.0)
+                                    normalized_ts.[i] <-  subval / subval_ref)
+                                                                                
+                                normalized_ts * wgt
+                                )
+                            |> List.fold (fun (acc : TimeSeries, aggval) value ->
+                                let subval = value.[value.Count - 1]
+                                let sub_ts_diff = (value.DifferenceReturn()).ReplaceNaN(0.0)
+                                                                                                                                                        
+                                (match acc with
+                                | x when x =  null -> sub_ts_diff
+                                | x when x.Count = sub_ts_diff.Count -> acc + sub_ts_diff                                                
+                                | _ -> acc), aggval + subval)  (null, 0.0)
+                        (ts * reference_aum).ReplaceNaN(0.0)                                        
+                        
 
-                                                let wgt = subval_ref * posval / reference_aum
+                    | _ -> 
+                        let ttype = if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Fund then TimeSeriesType.AdjClose else if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
+                        let ts_s = instrument.GetTimeSeries(ttype)
+                        
+                        let normalized_ts = new TimeSeries(dateList.Count, new DateTimeList(dateList))
+                        let date_ref = normalized_ts.DateTimes.[days_back]
+                        //let fx_ref = CurrencyPair.Convert(1.0, date_ref, TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, instrument.Currency)
+                        let fx_ref = CurrencyPair.Convert(1.0, date_ref, strategy.Portfolio.Currency, instrument.Currency)
+                        let subval_ref = instrument.[date_ref, ttype, TimeSeriesRollType.Last] * (if Double.IsNaN(fx_ref) then 1.0 else fx_ref) * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
 
-                                        
-                                                [|0 .. days_back|] |> Array.iter(fun i ->                                                                                                                                                                                                                                                                                                                                 
-                                                                                        let date = normalized_ts.DateTimes.[i]
-                                                                                        //let fx = CurrencyPair.Convert(1.0, (if fx_hedge then orderDate.DateTime else date), TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, sub_instrument.Currency)
-                                                                                        let fx = CurrencyPair.Convert(1.0, (if fx_hedge then orderDate.DateTime else date), strategy.Portfolio.Currency, sub_instrument.Currency)
-                                                                                        let subval = sub_instrument.[date, ttype, TimeSeriesRollType.Last] * (if Double.IsNaN(fx) then 1.0 else fx) * (if sub_instrument :? Security then (sub_instrument :?> Security).PointSize else 1.0)
-                                                                                        normalized_ts.[i] <-  subval / subval_ref)
-                                                                                               
-                                                normalized_ts * wgt
-                                                )
-                                            |> List.fold (fun (acc : TimeSeries, aggval) value ->
-                                                let subval = value.[value.Count - 1]
-                                                let sub_ts_diff = (value.DifferenceReturn()).ReplaceNaN(0.0)
-                                                                                                                                                                        
-                                                (match acc with
-                                                | x when x =  null -> sub_ts_diff
-                                                | x when x.Count = sub_ts_diff.Count -> acc + sub_ts_diff                                                
-                                                | _ -> acc), aggval + subval)  (null, 0.0)
-                                        (ts * reference_aum).ReplaceNaN(0.0)                                        
-                                        
+                        
+                        
+                        [|0 .. days_back|] 
+                        |> Array.iter(fun i ->                                                                                                                                                                                                                                                                                                                                 
+                            let date = normalized_ts.DateTimes.[i]
 
-                                    | _ -> 
-                                        let ttype = if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Fund then TimeSeriesType.AdjClose else if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
-                                        let ts_s = instrument.GetTimeSeries(ttype)
-                                        
-                                        let normalized_ts = new TimeSeries(dateList.Count, new DateTimeList(dateList))
-                                        let date_ref = normalized_ts.DateTimes.[days_back]
-                                        //let fx_ref = CurrencyPair.Convert(1.0, date_ref, TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, instrument.Currency)
-                                        let fx_ref = CurrencyPair.Convert(1.0, date_ref, strategy.Portfolio.Currency, instrument.Currency)
-                                        let subval_ref = instrument.[date_ref, ttype, TimeSeriesRollType.Last] * (if Double.IsNaN(fx_ref) then 1.0 else fx_ref) * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
-                                        
-                                        [|0 .. days_back|] |> Array.iter(fun i ->                                                                                                                                                                                                                                                                                                                                 
-                                                                                let date = normalized_ts.DateTimes.[i]
-                                                                                //let fx = CurrencyPair.Convert(1.0, (if fx_hedge then orderDate.DateTime else date), TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, instrument.Currency)
-                                                                                let fx = CurrencyPair.Convert(1.0, (if fx_hedge then orderDate.DateTime else date), strategy.Portfolio.Currency, instrument.Currency)
-                                                                                let subval = instrument.[date, ttype, TimeSeriesRollType.Last] * (if Double.IsNaN(fx) then 1.0 else fx) * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
-                                                                                normalized_ts.[i] <- reference_aum * subval / subval_ref)
+                            let fx = CurrencyPair.Convert(1.0, (if fx_hedge then orderDate.DateTime else date), strategy.Portfolio.Currency, instrument.Currency)
+                            let subval = instrument.[date, ttype, TimeSeriesRollType.Last] * (if Double.IsNaN(fx) then 1.0 else fx) * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
 
-                                        normalized_ts.DifferenceReturn().ReplaceNaN(0.0))
-                                |> Map.filter (fun id tuple -> not (tuple = null))
+                            normalized_ts.[i] <- subval)
+
+                        normalized_ts.DifferenceReturn().ReplaceNaN(0.0) * reference_aum / subval_ref
+                )
+            |> Map.filter (fun id tuple -> not (tuple = null))
         
         timeSeriesMap 
     
@@ -1187,7 +1187,8 @@ module Utils =
                 let last = Math.Max(0, idx - days_back + i)
                 let fx_t = CurrencyPair.Convert(1.0, ts.DateTimes.[last], TimeSeriesType.Last, DataProvider.DefaultProvider, TimeSeriesRollType.Last, ccy, instrument.Currency)
                 let fx_0 = CurrencyPair.Convert(1.0, ts.DateTimes.[first], TimeSeriesType.Last, DataProvider.DefaultProvider, TimeSeriesRollType.Last, ccy, instrument.Currency)
-                let ret = (ts.[last] * fx_t) / (ts.[first] * fx_0) - 1.0                                    
+                // let ret = (ts.[last] * fx_t) / (ts.[first] * fx_0) - 1.0
+                let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
                 ret)
         
             let rets = returnsList |> Array.filter(Double.IsNaN >> not) |> Array.sort
@@ -1195,7 +1196,10 @@ module Utils =
             let pctl_n = (int)pctl
             let pctl_d = pctl - (double)pctl_n
             let VaR = (rets.[pctl_n] + pctl_d * (rets.[pctl_n + 1] - rets.[pctl_n]))
-            VaR
+
+            let scale = (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
+            let instrument_value = instrument.[orderDate, TimeSeriesType.Last, TimeSeriesRollType.Last] * scale
+            VaR / instrument_value
         with
         | ex -> 
             Console.WriteLine(ex)
@@ -1284,13 +1288,12 @@ module Utils =
         let weightedTS = 
             spositions 
             |> Seq.fold(fun acc (sinstrument, unit) ->
-                            //let sinstrument = vp.Instrument
+
                             let unit = unit * (if sinstrument :? Security then (sinstrument :?> Security).PointSize else 1.0)                                                                    
                             let value = 
                                 if sinstrument.InstrumentType = InstrumentType.Strategy then
                                     stratValue(sinstrument :?> Strategy)
                                 else
-                                    //sinstrument.[date, (if sinstrument.InstrumentType = InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.AdjClose), TimeSeriesRollType.Last]
                                     sinstrument.[date, (if sinstrument.InstrumentType = InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close), TimeSeriesRollType.Last]
 
                             let fx = CurrencyPair.Convert(1.0, date, TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, sinstrument.Currency)
@@ -1591,8 +1594,6 @@ module Utils =
         
         let irr = Math.Pow(ts.[length - 1] / ts.[0] , (1.0 / t)) - 1.0
 
-        //let date = DateTime.Now
-        //let reference_aum = strategy.GetSODAUM(date, TimeSeriesType.Last)
         let reference_aum = strategy.Portfolio.[date, TimeSeriesType.Last, TimeSeriesRollType.Last]
         let days_back = 60
         
@@ -1641,76 +1642,31 @@ module Utils =
 
         let mutable tot = 0.0
         positions 
-        //|> Seq.filter(fun position -> not (strategy.Portfolio.IsReserve(position.Instrument)))
-        |> Seq.iter(fun position ->
-                                    let instrument = position.Instrument
-                                                                    
-                                    //let ttype = if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity then TimeSeriesType.AdjClose else if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
-                                    //let ts_s = instrument.GetTimeSeries(ttype)
-                                    //let ts_s_count = if not (ts_s = null) then ts_s.Count else 0
-                                    //let idx_s = if ts_s_count > 0 then ts_s.GetClosestDateIndex(date, TimeSeries.DateSearchType.Previous) else 0
-                                    //let ts_s = instrument.GetTimeSeries(ttype).GetRange(1 , idx_s)
-
-                            
-                                    let fx = CurrencyPair.Convert(1.0, date, TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, instrument.Currency)
-                                    //let value = instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last] * position.Unit * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0) * fx
-                                    let value = instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last] * position.Unit * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0) * fx / reference_aum
-                                    //Console.WriteLine("Wgt: " +  (instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last]).ToString("#0.00") + " " + instrument.Description + " " + date.ToString())
-                                    tot <- tot + value
-                                    Console.WriteLine("Wgt: " +  value.ToString("#0.00%") + " " + (instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last]).ToString() + " " + (position.Unit).ToString() + " " + instrument.Description + " - " + instrument.Currency.Name + " " + position.Timestamp.ToString() + " " + position.StrikeTimestamp.ToString())
-                    )
+        |> Seq.iter(
+            fun position ->
+                let instrument = position.Instrument                            
+                let fx = CurrencyPair.Convert(1.0, date, TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, instrument.Currency)
+                //let value = instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last] * position.Unit * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0) * fx
+                let value = instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last] * position.Unit * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0) * fx / reference_aum
+                //Console.WriteLine("Wgt: " +  (instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last]).ToString("#0.00") + " " + instrument.Description + " " + date.ToString())
+                tot <- tot + value
+                Console.WriteLine("Wgt: " +  value.ToString("#0.00%") + " " + (instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last]).ToString() + " " + (position.Unit).ToString() + " " + instrument.Description + " - " + instrument.Currency.Name + " " + position.Timestamp.ToString() + " " + position.StrikeTimestamp.ToString())
+            )
                                        
-        Console.WriteLine("------------------ " + (1.0-tot).ToString())
         strategy.Portfolio.PositionOrders(date, false).Values 
         |> Seq.filter(fun position -> not (strategy.Portfolio.IsReserve(position.Instrument)) && position.Instrument.InstrumentType = InstrumentType.Strategy)
-        |> Seq.iter(fun position ->
-                                    let instrument = position.Instrument
-                                                                    
-//                                    let ttype = if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.ETF || instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Equity then TimeSeriesType.AdjClose else if instrument.InstrumentType = AQI.AQILabs.Kernel.InstrumentType.Strategy then TimeSeriesType.Last else TimeSeriesType.Close
-//                                    let ts_s = instrument.GetTimeSeries(ttype)
-//                                    let ts_s_count = if not (ts_s = null) then ts_s.Count else 0
-//                                    let idx_s = if ts_s_count > 0 then ts_s.GetClosestDateIndex(date, TimeSeries.DateSearchType.Previous) else 0
-//                                    let ts_s = instrument.GetTimeSeries(ttype).GetRange(1 , idx_s)
-//
-//                            
-//                                    let fx = CurrencyPair.Convert(1.0, date, TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, instrument.Currency)
-                                    let value = (instrument :?> Strategy).Portfolio.RiskNotional(date) / reference_aum //instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last] * position.Unit * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0) * fx / reference_aum
+        |> Seq.iter(
+            fun position ->
+                let instrument = position.Instrument
+                                                
+                let value = (instrument :?> Strategy).Portfolio.RiskNotional(date) / reference_aum //instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last] * position.Unit * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0) * fx / reference_aum
 
-//                                    let adjustStrategyAUM (instru : Instrument) = 
-//                                        if instru.InstrumentType = InstrumentType.Strategy && not ((instru :?> Strategy).Portfolio = null) then
-//                                            let strategy = instru :?> Strategy
-//                                            let strategy_aum = strategy.GetSODAUM(date, TimeSeriesType.Last)                            
-//                                            let positions = strategy.Portfolio.PositionOrders(date, true)
-//                                            let value =
-//                                                positions.Values 
-//                                                |> Seq.filter(fun position -> not (strategy.Portfolio.IsReserve(position.Instrument)))
-//                                                |> Seq.fold(fun acc position ->
-//                                                                            let instrument = position.Instrument                                                                                                                                                                                                                    
-//                                                                            let fx = CurrencyPair.Convert(1.0, date, TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, instrument.Currency)
-//                                                                            acc + position.Unit * instrument.[date, TimeSeriesType.Last, TimeSeriesRollType.Last] * fx * (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
-//                                                            ) 0.0
-//                                            if Math.Abs(value) < 1e-5 || strategy_aum = 0.0 then 
-//                                                1.0
-//                                            else 
-//                                                strategy_aum / value
-//                                        else 1.0
-
-                                    Console.WriteLine("Wgt: " +  (value).ToString("#0.00%") + " " + instrument.Description)
-                                    //Console.WriteLine("Wgt: " +  (value).ToString("#0.00%") + " " + instrument.Description)
-                    )
+                Console.WriteLine("Wgt: " +  (value).ToString("#0.00%") + " " + instrument.Description)
+            )
 
         let aggregatedTimeSeries = [0 .. tsl.Length - 1] |> List.map (fun i ->  tsl.[i]) |> List.fold (fun acc ts -> if acc = null then ts else acc + ts) null
         let portfolio_vol = if aggregatedTimeSeries = null then 0.0 else sqrt((aggregatedTimeSeries).Variance * 252.0)
         let strategy_vol = sqrt((ts.LogReturn()).Variance * 252.0)
-
-//        let tsl_count = List.length tsl
-//        let vars = new Vector(tsl_count, 1.0)
-//        [0 .. tsl_count - 1] |> List.iter (fun i -> vars.[i] <- tsl.[i].Variance)
-//        let covariance = Covariance tsl
-//        let wgts_v = new Vector(tsl_count, 1.0)
-//        [0 .. tsl_count - 1] |> List.iter (fun i -> wgts_v.[i] <- wgts.[i])
-//               
-//        let vv = sqrt(252.0 * (wgts_v.PointwiseMultiply(wgts_v) * vars + wgts_v * covariance * wgts_v))
 
         Console.WriteLine("Last: " + ts.[length - 1].ToString())
         Console.WriteLine("IRR: " + irr.ToString())
