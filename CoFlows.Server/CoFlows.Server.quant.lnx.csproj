@@ -17,7 +17,7 @@
   </PropertyGroup> 
 
   <ItemGroup>
-    <Content Include="ref\**\*.dll" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
+    <!-- <Content Include="ref\**\*.dll" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
     <Folder Include="wwwroot\" CopyToPublishDirectory="Always" />
     <Content Include="jupyter/ipykernel_launcher.py" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
     <Content Include="jupyter/lab.quant" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
@@ -26,7 +26,13 @@
     <Content Include="sql/create.sql" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
     <Content Include="sql/quant.sql" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
     <Content Include="sql/calendars.sql" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
-    <Content Include="sql/fic.sql" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
+    <Content Include="sql/fic.sql" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  /> -->
+
+    <Content Include="appsettings.json" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
+    <Content Include="ref\**\*.dll" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
+    <Content Include="wwwroot\**\*.*" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
+    <Content Include="jupyter\**\*.*" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
+    <Content Include="sql\**\*.*" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"  />
 
     <Compile Remove="Realtime\RTDSocketMiddleware.cs" />
     <Compile Remove="Startup.cs" />
