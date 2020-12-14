@@ -126,7 +126,7 @@ namespace CoFlows.Server.Controllers
             strategy.Tree.Initialize();
             strategy.Tree.LoadPortfolioMemory();
 
-            return Ok(strategy.Package(calculate));
+            return Ok(strategy.Package(calculate, DateTime.Now));
         }
         
         /// <summary>
@@ -155,7 +155,7 @@ namespace CoFlows.Server.Controllers
             if (strategy == null)
                 return BadRequest();
 
-            return Ok(strategy.Package(true));
+            return Ok(strategy.Package(true, DateTime.Now));
         }
         
         /// <summary>

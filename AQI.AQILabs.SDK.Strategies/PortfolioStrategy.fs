@@ -1726,7 +1726,8 @@ type PortfolioStrategy =
                                                                                     let last = Math.Max(0, idx - days_back + i)
                                                                                     let fx_t = CurrencyPair.Convert(1.0, ts.DateTimes.[last], TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, this.Portfolio.Currency, position.Instrument.Currency)
                                                                                     let fx_0 = CurrencyPair.Convert(1.0, ts.DateTimes.[first], TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, this.Portfolio.Currency, position.Instrument.Currency)
-                                                                                    let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
+                                                                                    // let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
+                                                                                    let ret = (ts.[last] * fx_t) / (ts.[first] * fx_0) - 1.0
                                                                                     ret * weight * weightMap.[instrument.ID])
                                                                         [|1 .. days_back|] |> Array.map (fun i -> acc.[i - 1] + rets.[i - 1])) (Array.zeroCreate days_back )
                                         
@@ -1737,8 +1738,8 @@ type PortfolioStrategy =
                                                                     let scale = (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
 
                                                                     let instrument_value = instrument.[orderDate.DateTime, TimeSeriesType.Last, TimeSeriesRollType.Last] * scale
-                                                                    let unit = weightMap.[instrument.ID] * reference_aum / instrument_value
-                            
+                                                                    // let unit = weightMap.[instrument.ID] * reference_aum / instrument_value
+                                                                    let wgt = weightMap.[instrument.ID]                            
 
                                                                     [|1 .. days_back|] |> Array.map (fun i ->
                                                                         let first = Math.Max(0, idx - days_back + i - days_window)
@@ -1746,16 +1747,19 @@ type PortfolioStrategy =
                                                                         
                                                                         let fx_t = CurrencyPair.Convert(1.0, ts.DateTimes.[last], TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, this.Portfolio.Currency, instrument.Currency)
                                                                         let fx_0 = CurrencyPair.Convert(1.0, ts.DateTimes.[first], TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, this.Portfolio.Currency, instrument.Currency)
-                                                                        let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
+                                                                        // let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
+                                                                        let ret = (ts.[last] * fx_t) / (ts.[first] * fx_0) - 1.0
                                     
-                                                                        ret * unit * scale
+                                                                        // ret * unit * scale
+                                                                        ret * wgt
                                                                         ))
                                     
-                                                        let rets = returnsList |> Array.fold (fun (acc : float[] ) rets -> [|1 .. days_back|] |> Array.map( fun j -> acc.[j - 1] + rets.[j - 1])) (Array.zeroCreate days_back) |> Array.sort
-                                                        let pctl = level * (double (rets.Length - 1)) + 1.0;
+                                                        let rets = (returnsList |> Array.fold (fun (acc : float[] ) rets -> [|1 .. days_back|] |> Array.map( fun j -> acc.[j - 1] + rets.[j - 1])) (Array.zeroCreate days_back)) |> Array.sort
+                                                        let pctl = level * (double (rets.Length - 1)) + 1.0
                                                         let pctl_n = (int)pctl
                                                         let pctl_d = pctl - (double)pctl_n
-                                                        let VaR = (rets.[pctl_n] + pctl_d * (rets.[pctl_n + 1] - rets.[pctl_n])) / reference_aum
+                                                        // let VaR = (rets.[pctl_n] + pctl_d * (rets.[pctl_n + 1] - rets.[pctl_n])) / reference_aum
+                                                        let VaR = (rets.[pctl_n] + pctl_d * (rets.[pctl_n + 1] - rets.[pctl_n])) // reference_aum
 
                                                         if (VaR <= TargetVAR) then                        
                                                             let max_var_scale = TargetVAR / VaR
@@ -1862,9 +1866,9 @@ type PortfolioStrategy =
     /// </summary>    
     /// <param name="pkg">Package
     /// </param>
-    member this.Package(calculate : bool) : MasterPkg_v1 =
+    member this.Package(calculate : bool, date : DateTime) : MasterPkg_v1 =
 
-        let bday = this.Calendar.GetClosestBusinessDay(DateTime.Now, TimeSeries.DateSearchType.Next)
+        let bday = this.Calendar.GetClosestBusinessDay(date, TimeSeries.DateSearchType.Next)
         let t = bday.DateTime
         let ts = this.GetTimeSeries(TimeSeriesType.Last)
         
@@ -2277,7 +2281,8 @@ type PortfolioStrategy =
                         CurrentRisk = 
                             {
                                 Volatility = Utils.Volatility(strategy, t, days_back, true)
-                                ValueAtRisk = Utils.VaR(strategy, t, 1, days_window, 0.99, true)
+                                // ValueAtRisk = Utils.VaR(strategy, t, 1, days_window, 0.99, true)
+                                ValueAtRisk = Utils.VaR(strategy, t, days_window, 252, 0.99, true) 
                                 InformationRatio = if not(strategy :? PortfolioStrategy) then 0.0 else (strategy :?> PortfolioStrategy).InformationRatio(strategy.Calendar.GetClosestBusinessDay(t, TimeSeries.DateSearchType.Previous), null, true)
                                 RiskNotional =
                                     strategy.Portfolio.Positions(t, true) 
@@ -2300,6 +2305,7 @@ type PortfolioStrategy =
                             {
                                 Volatility = Utils.Volatility(strategy, t, days_back, false)
                                 ValueAtRisk = Utils.VaR(strategy, t, days_window, 252, 0.99, false)                                
+                                // ValueAtRisk = Utils.VaR(strategy, t, 1, days_window, 0.99, false)
                                 InformationRatio = if not(strategy :? PortfolioStrategy) then 0.0 else (strategy :?> PortfolioStrategy).InformationRatio(strategy.Calendar.GetClosestBusinessDay(t, TimeSeries.DateSearchType.Previous), null, false)
                                 RiskNotional =
                                     strategy.Portfolio.PositionOrders(t, true).Values 

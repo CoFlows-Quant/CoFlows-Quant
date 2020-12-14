@@ -343,7 +343,7 @@ namespace QuantApp.Server.Utils
                 Intraday = Instrument.TimeSeriesLoadFromDatabaseIntraday ? jres_intraday : null,
                 Statistics = jres_stats,
                 Monthly = jres_monthly,
-                Strategy = strategy is PortfolioStrategy && strategy.Portfolio.ParentPortfolio == null ? (strategy as PortfolioStrategy).Package(false) : null,
+                Strategy = strategy is PortfolioStrategy && strategy.Portfolio.ParentPortfolio == null ? (strategy as PortfolioStrategy).Package(false, DateTime.Now) : null,
 
                 //TotalTrades = total_count,
                 //PositiveTrades = positive_count,

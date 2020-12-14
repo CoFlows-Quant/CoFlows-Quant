@@ -1123,7 +1123,7 @@ module Utils =
                     let idx = ts.GetClosestDateIndex(orderDate, TimeSeries.DateSearchType.Previous)
 
                     let scale = (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
-                    //let weightPos = pos.Unit * scale * insvalue * fx // reference_aum         
+                    let weightPos = pos.Unit * scale * insvalue * fx // reference_aum         
 
                     [|1 .. days_back|] 
                     |> Array.map (fun i ->
@@ -1133,8 +1133,10 @@ module Utils =
                             let fx_0 = CurrencyPair.Convert(1.0, ts.DateTimes.[first], TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, instrument.Currency)
                             //let fx_t = CurrencyPair.Convert(1.0, ts.DateTimes.[last], strategy.Portfolio.Currency, instrument.Currency)
                             //let fx_0 = CurrencyPair.Convert(1.0, ts.DateTimes.[first], strategy.Portfolio.Currency, instrument.Currency)
-                            let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
-                            ret * pos.Unit * scale)
+                            // let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
+                            // ret * pos.Unit * scale)
+                            let ret = (ts.[last] * fx_t) / (ts.[first] * fx_0) - 1.0
+                            ret * weightPos)
                 )
             
             else
@@ -1151,7 +1153,7 @@ module Utils =
                     let idx = ts.GetClosestDateIndex(orderDate, TimeSeries.DateSearchType.Previous)
 
                     let scale = (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
-                    //let weightPos = pos.Unit * scale * insvalue * fx // reference_aum         
+                    let weightPos = pos.Unit * scale * insvalue * fx // reference_aum         
 
                     [|1 .. days_back|] 
                     |> Array.map (fun i ->
@@ -1161,13 +1163,15 @@ module Utils =
                             let fx_0 = CurrencyPair.Convert(1.0, ts.DateTimes.[first], TimeSeriesType.Close, DataProvider.DefaultProvider, TimeSeriesRollType.Last, strategy.Portfolio.Currency, instrument.Currency)
                             //let fx_t = CurrencyPair.Convert(1.0, ts.DateTimes.[last], strategy.Portfolio.Currency, instrument.Currency)
                             //let fx_0 = CurrencyPair.Convert(1.0, ts.DateTimes.[first], strategy.Portfolio.Currency, instrument.Currency)
-                            let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
-                            ret * pos.Unit * scale)
+                            // let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
+                            let ret = (ts.[last] * fx_t) / (ts.[first] * fx_0) - 1.0
+                            ret * weightPos)
+                            // ret * pos.Unit * scale)
                     )
                                     
         //let rets = returnsList|> List.fold (fun (acc : float list) rets -> [1 .. days_back] |> List.map( fun j -> acc.[j - 1] + rets.[j - 1])) (Array.zeroCreate days_back |> Array.toList) |> List.sort
         let rets = returnsList |> Array.fold (fun (acc : float[] ) rets -> [|1 .. days_back|] |> Array.map( fun j -> acc.[j - 1] + rets.[j - 1])) (Array.zeroCreate days_back) |> Array.sort
-        let pctl = level * (double (rets.Length - 1)) + 1.0;
+        let pctl = level * (double (rets.Length - 1)) + 1.0
         let pctl_n = (int)pctl
         let pctl_d = pctl - (double)pctl_n
         let VaR = (rets.[pctl_n] + pctl_d * (rets.[pctl_n + 1] - rets.[pctl_n])) // reference_aum
@@ -1187,19 +1191,20 @@ module Utils =
                 let last = Math.Max(0, idx - days_back + i)
                 let fx_t = CurrencyPair.Convert(1.0, ts.DateTimes.[last], TimeSeriesType.Last, DataProvider.DefaultProvider, TimeSeriesRollType.Last, ccy, instrument.Currency)
                 let fx_0 = CurrencyPair.Convert(1.0, ts.DateTimes.[first], TimeSeriesType.Last, DataProvider.DefaultProvider, TimeSeriesRollType.Last, ccy, instrument.Currency)
-                // let ret = (ts.[last] * fx_t) / (ts.[first] * fx_0) - 1.0
-                let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
+                let ret = (ts.[last] * fx_t) / (ts.[first] * fx_0) - 1.0
+                // let ret = (ts.[last] * fx_t) - (ts.[first] * fx_0)
                 ret)
         
             let rets = returnsList |> Array.filter(Double.IsNaN >> not) |> Array.sort
-            let pctl = level * (double (rets.Length - 1)) + 1.0;
+            let pctl = level * (double (rets.Length - 1)) + 1.0
             let pctl_n = (int)pctl
             let pctl_d = pctl - (double)pctl_n
             let VaR = (rets.[pctl_n] + pctl_d * (rets.[pctl_n + 1] - rets.[pctl_n]))
 
             let scale = (if instrument :? Security then (instrument :?> Security).PointSize else 1.0)
             let instrument_value = instrument.[orderDate, TimeSeriesType.Last, TimeSeriesRollType.Last] * scale
-            VaR / instrument_value
+            // VaR / instrument_value
+            VaR
         with
         | ex -> 
             Console.WriteLine(ex)
@@ -1244,8 +1249,8 @@ module Utils =
 
                 if current then strategy.GetAUM(date.Date, TimeSeriesType.Last) else strategy.GetSODAUM(date, TimeSeriesType.Last)
 
-        //let timeSeriesMap = TimeSeriesMap(strategy, strategy.Instruments(date, agg).Values, strategy.Calendar.GetClosestBusinessDay(date, TimeSeries.DateSearchType.Previous), ref_aum, days_back, true, current)
-        let timeSeriesMap = TimeSeriesMap(strategy, strategy.Instruments(date, agg).Values, Calendar.FindCalendar("All").GetClosestBusinessDay(date, TimeSeries.DateSearchType.Previous), ref_aum, days_back, true, current)
+        let timeSeriesMap = TimeSeriesMap(strategy, strategy.Instruments(date, agg).Values, strategy.Portfolio.MasterPortfolio.Strategy.Calendar.GetClosestBusinessDay(date, TimeSeries.DateSearchType.Previous), ref_aum, days_back, true, current)
+        // let timeSeriesMap = TimeSeriesMap(strategy, strategy.Instruments(date, agg).Values, Calendar.FindCalendar("All").GetClosestBusinessDay(date, TimeSeries.DateSearchType.Previous), ref_aum, days_back, true, current)
 
         
         let spositions = 
@@ -1263,8 +1268,8 @@ module Utils =
 
 
         let stratValue (strategy : Strategy) = 
-                        //let timeSeriesMap = TimeSeriesMap(strategy, strategy.Instruments(date, true).Values, strategy.Calendar.GetClosestBusinessDay(date, TimeSeries.DateSearchType.Previous), ref_aum, days_back, true, current)   
-                        let timeSeriesMap = TimeSeriesMap(strategy, strategy.Instruments(date, true).Values, Calendar.FindCalendar("All").GetClosestBusinessDay(date, TimeSeries.DateSearchType.Previous), ref_aum, days_back, true, current)   
+                        let timeSeriesMap = TimeSeriesMap(strategy, strategy.Instruments(date, true).Values, strategy.Portfolio.MasterPortfolio.Strategy.Calendar.GetClosestBusinessDay(date, TimeSeries.DateSearchType.Previous), ref_aum, days_back, true, current)   
+                        // let timeSeriesMap = TimeSeriesMap(strategy, strategy.Instruments(date, true).Values, Calendar.FindCalendar("All").GetClosestBusinessDay(date, TimeSeries.DateSearchType.Previous), ref_aum, days_back, true, current)   
                         let spositions = 
                             if current then
                                 let positions = strategy.Portfolio.Positions(date, true)
