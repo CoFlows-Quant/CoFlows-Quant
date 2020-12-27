@@ -16,13 +16,17 @@ export class AppComponent {
 
     constructor(private readonly location: Location, private activatedRoute: ActivatedRoute, private router: Router, public coflows: CoFlowsComponent, private sanitization:DomSanitizer){
 
+        var n=0
         this.activatedRoute.url.subscribe(params => {
-            let cleanUrl = params.map(x => decodeURIComponent(x.path)).join('/')
-            let fullUrl = this.coflows.coflows_server + cleanUrl
-            this.url = this.sanitization.bypassSecurityTrustResourceUrl(fullUrl)
-            this.location.go(cleanUrl)
+            if(n == 0)
+            {
+                let cleanUrl = params.map(x => decodeURIComponent(x.path)).join('/')
+                let fullUrl = this.coflows.coflows_server + cleanUrl
+                this.url = this.sanitization.bypassSecurityTrustResourceUrl(fullUrl)
+                n++
+                this.location.go('/workflows/app/' + cleanUrl)
+            }
             
-        });
-
+        })
     }
 }
