@@ -30,6 +30,9 @@ using Newtonsoft.Json;
 using QuantApp.Kernel;
 using QuantApp.Engine;
 
+using SendGrid;
+using SendGrid.Helpers.Mail;
+
 using AQI.AQILabs.Kernel;
 using AQI.AQILabs.Kernel.Factories;
 
@@ -1130,33 +1133,28 @@ namespace CoFlows.Server.Realtime
         {
             try
             {
-                var mailMsg = new System.Net.Mail.MailMessage();
-
-                //// To
+                Console.WriteLine("----- SEND MESSAGE START");
+                // //// From
+                var pairFrom = from.Split(';');
+                var emailFrom = pairFrom[0];
+                var nameFrom = pairFrom[1];
+                var client = new SendGridClient(Program.sendGridKey);
+                var _from = new EmailAddress(emailFrom, nameFrom);
+                // //// To
+                var _to = new List<EmailAddress>();
                 foreach(var pairs in to)
                 {
                     var pair = pairs.Split(';');
                     var email = pair[0];
                     var name = pair[1];
-                    mailMsg.To.Add(new System.Net.Mail.MailAddress(email, name));
+                    _to.Add(new EmailAddress(email, name));
                 }
+                var plainTextContent = message;
+                var htmlContent = message;
+                var msg = MailHelper.CreateSingleEmailToMultipleRecipients(_from, _to, subject, plainTextContent, htmlContent);
+                var response = client.SendEmailAsync(msg);
 
-                //// From
-                var pairFrom = from.Split(';');
-                var emailFrom = pairFrom[0];
-                var nameFrom = pairFrom[1];
-                mailMsg.From = new System.Net.Mail.MailAddress(emailFrom, nameFrom);
-
-                mailMsg.Subject = subject;
-                mailMsg.AlternateViews.Add(System.Net.Mail.AlternateView.CreateAlternateViewFromString(message, null, System.Net.Mime.MediaTypeNames.Text.Plain));
-                mailMsg.AlternateViews.Add(System.Net.Mail.AlternateView.CreateAlternateViewFromString(message.Replace(System.Environment.NewLine, "<br>"), null, System.Net.Mime.MediaTypeNames.Text.Html));
-
-                //// Init SmtpClient and send
-                var smtpClient = new System.Net.Mail.SmtpClient("smtp.sendgrid.net", Convert.ToInt32(587));
-                var credentials = new System.Net.NetworkCredential("aqi", "Capital!1234");
-                smtpClient.Credentials = credentials;
-
-                smtpClient.Send(mailMsg);
+                Console.WriteLine("----- SEND MESSAGE END");
             }
             catch(Exception e)
             {

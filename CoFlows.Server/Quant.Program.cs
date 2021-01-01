@@ -67,24 +67,28 @@ namespace CoFlows.Server.Quant
             if(string.IsNullOrEmpty(config_file))
                 config_file = "coflows_config.json";
 
-            CoFlows.Server.Program.config = string.IsNullOrEmpty(config_env) ? (JObject)JToken.ReadFrom(new JsonTextReader(File.OpenText(@"mnt/" + config_file))) : (JObject)JToken.Parse(config_env);
+            bool addWorkflow = args[0] == "add" && args[1] == "workflow";
+
+            CoFlows.Server.Program.config = addWorkflow ? null : string.IsNullOrEmpty(config_env) ? (JObject)JToken.ReadFrom(new JsonTextReader(File.OpenText(@"mnt/" + config_file))) : (JObject)JToken.Parse(config_env);
             var config = CoFlows.Server.Program.config;
 
-            CoFlows.Server.Program.workflow_name = config["Workflow"].ToString();
-            CoFlows.Server.Program.hostName = config["Server"]["Host"].ToString();
-            var secretKey = config["Server"]["SecretKey"].ToString();
+            CoFlows.Server.Program.workflow_name = addWorkflow ? "" : config["Workflow"].ToString();
+            CoFlows.Server.Program.hostName = addWorkflow ? "" : config["Server"]["Host"].ToString();
+            var secretKey = addWorkflow ? "" : config["Server"]["SecretKey"].ToString();
 
-            var cloudHost = config["Cloud"]["Host"].ToString();
-            var cloudKey = config["Cloud"]["SecretKey"].ToString();
-            var cloudSSL = config["Cloud"]["SSL"].ToString();
+            var cloudHost = addWorkflow ? "" : config["Cloud"]["Host"].ToString();
+            var cloudKey = addWorkflow ? "" : config["Cloud"]["SecretKey"].ToString();
+            var cloudSSL = addWorkflow ? "" : config["Cloud"]["SSL"].ToString();
 
-            CoFlows.Server.Program.letsEncryptEmail = config["Server"]["LetsEncrypt"]["Email"].ToString();
-            CoFlows.Server.Program.letsEncryptStaging = config["Server"]["LetsEncrypt"]["Staging"].ToString().ToLower() == "true";
+            CoFlows.Server.Program.letsEncryptEmail = addWorkflow ? "" : config["Server"]["LetsEncrypt"]["Email"].ToString();
+            CoFlows.Server.Program.letsEncryptStaging = addWorkflow ? false : config["Server"]["LetsEncrypt"]["Staging"].ToString().ToLower() == "true";
 
-            var sslFlag = CoFlows.Server.Program.hostName.ToLower() != "localhost" && !string.IsNullOrWhiteSpace(CoFlows.Server.Program.letsEncryptEmail);
+            CoFlows.Server.Program.sendGridKey = addWorkflow ? "" : config["SendGrid"] == null ? "" : config["SendGrid"].ToString();
+
+            var sslFlag = addWorkflow ? false : CoFlows.Server.Program.hostName.ToLower() != "localhost" && !string.IsNullOrWhiteSpace(CoFlows.Server.Program.letsEncryptEmail);
 
 
-            CoFlows.Server.Program.useJupyter = config["Jupyter"].ToString().ToLower() == "true";
+            CoFlows.Server.Program.useJupyter = addWorkflow ? false : config["Jupyter"].ToString().ToLower() == "true";
 
             //Jupyter Lab
             if(args != null && args.Length > 0 && args[0] == "lab")
@@ -580,6 +584,8 @@ namespace CoFlows.Server.Quant
             {
                 PythonEngine.BeginAllowThreads();
 
+                Connection.timeout = 15 * 60;
+
                 Console.WriteLine();
                 Console.WriteLine("Azure Container Instance start...");
                 var t0 = DateTime.Now;
@@ -736,12 +742,12 @@ namespace CoFlows.Server.Quant
 
                 Connection.Client.Init(serverUrl, sslFlag);
 
-                for(int i = 0; i < 50 ; i++)
+                for(int i = 0; i < 150 ; i++)
                 {
                     try
                     {
                         SdkContext.DelayProvider.Delay(10000);
-                        // Console.WriteLine("Connecting to Cluster(" + i + "): " + CoFlows.Server.Program.hostName + " with SSL " + sslFlag + " " + config["Server"]["SecretKey"].ToString());
+                        // Console.WriteLine("Connecting to Cluster(" + i + "): " + serverUrl + " with SSL " + sslFlag + " " + config["Server"]["SecretKey"].ToString());
                         if(!Connection.Client.Login(config["Server"]["SecretKey"].ToString()))
                             throw new Exception("CoFlows Not connected!");
 
@@ -749,7 +755,7 @@ namespace CoFlows.Server.Quant
                         Console.WriteLine("Container connected! " + i);
                         break;
                     }
-                    catch{}
+                    catch(Exception e){ }
                 }
 
                 QuantApp.Kernel.M.Factory = new MFactory();
