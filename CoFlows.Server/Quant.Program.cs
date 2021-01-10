@@ -63,6 +63,7 @@ namespace CoFlows.Server.Quant
 
             var config_env = Environment.GetEnvironmentVariable("coflows_config");
             var config_file = Environment.GetEnvironmentVariable("config_file");
+            var empty_flag = Environment.GetEnvironmentVariable("coflows_empty");
 
             if(string.IsNullOrEmpty(config_file))
                 config_file = "coflows_config.json";
@@ -113,6 +114,7 @@ namespace CoFlows.Server.Quant
             //Cloud
             else if(args != null && args.Length > 1 && args[0] == "cloud" && args[1] == "deploy")
             {
+                
                 Console.WriteLine("Cloud Host: " + cloudHost);
                 Console.WriteLine("Cloud SSL: " + cloudSSL);
                 Connection.Client.Init(cloudHost, cloudSSL.ToLower() == "true");
@@ -126,6 +128,8 @@ namespace CoFlows.Server.Quant
                 QuantApp.Kernel.M.Factory = new MFactory();
 
                 Console.Write("Starting cloud deployment... ");
+
+                Connection.timeout = 15 * 60;
 
                 Code.UpdatePackageFile(CoFlows.Server.Program.workflow_name, new QuantApp.Engine.NuGetPackage(null, null), new QuantApp.Engine.PipPackage(null), new QuantApp.Engine.JarPackage(null));
                 var t0 = DateTime.Now;
@@ -295,10 +299,11 @@ namespace CoFlows.Server.Quant
                 Console.WriteLine("QuantApp Server " + DateTime.Now);
                 Console.WriteLine("DB Connected");
 
-                Console.WriteLine("Local deployment");
+                // Console.WriteLine("Local deployment");
 
                 if(string.IsNullOrEmpty(config_env))
                 {
+                    Console.WriteLine("config from file ");
                     var pkg = Code.ProcessPackageFile(CoFlows.Server.Program.workflow_name, true);
                     Code.ProcessPackageJSON(pkg);
                     var files = QuantApp.Kernel.M.Base(pkg.ID + "--Files")[x => true];
@@ -344,9 +349,9 @@ namespace CoFlows.Server.Quant
                             _g.Add(_quser, typeof(QuantApp.Kernel.User), _p.Permission);
                     }
                 }
-                else
+                else if(string.IsNullOrEmpty(empty_flag))
                 {
-                    Console.WriteLine("Empty server...");
+                    Console.WriteLine("config from environment");
                     var workspace_ids = QuantApp.Kernel.M.Base("--CoFlows--Workflows")[xe => true];
                     foreach(var wsp in workspace_ids)
                     {
@@ -385,6 +390,8 @@ namespace CoFlows.Server.Quant
                         Console.WriteLine(wsp + " started");
                     }
                 }
+                else
+                    Console.WriteLine("Empty Server");
 
                 Group.FindPermissibleFunction = (Type type, string id) =>
                 {
@@ -608,165 +615,240 @@ namespace CoFlows.Server.Quant
                     .Authenticate(credentials)
                     .WithDefaultSubscription();
 
-                string rgName = pkg.ID.ToLower() + "-rg";
-                string aciName = pkg.Name.ToLower();
-                string containerImageName = "coflows/quant";
+                Action<bool> runDeploy = newDeploy => {
                 
-                Console.WriteLine("Container Name: " + aciName);
-                Console.WriteLine("Resource Group Name: " + rgName);
-
-                try
-                {
-                    Console.WriteLine("Cleaning Resource Group: " + rgName);
-                    azure.ResourceGroups.BeginDeleteByName(rgName);
+                    string rgName = pkg.ID.ToLower() + "-rg";
+                    string aciName = pkg.Name.ToLower();
+                    string containerImageName = "coflows/quant";
                     
+                    Console.WriteLine("Container Name: " + aciName);
+                    Console.WriteLine("Resource Group Name: " + rgName);
 
-                    IResourceGroup resGroup = azure.ResourceGroups.GetByName(rgName);
-                    while(resGroup != null)
+                    try
                     {
-                        resGroup = azure.ResourceGroups.GetByName(rgName);
+                        Console.WriteLine("Cleaning Resource Group: " + rgName);
+                        azure.ResourceGroups.BeginDeleteByName(rgName);
+                        
+
+                        IResourceGroup resGroup = azure.ResourceGroups.GetByName(rgName);
+                        while(resGroup != null)
+                        {
+                            resGroup = azure.ResourceGroups.GetByName(rgName);
+
+                            Console.Write(".");
+
+                            SdkContext.DelayProvider.Delay(1000);
+                        }
+                        Console.WriteLine();
+
+                        Console.WriteLine("Cleaned Resource Group: " + rgName);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Did not create any resources in Azure. No clean up is necessary");
+                    }
+                    
+                    Region region = Region.Create(config["AzureContainerInstance"]["Region"].ToString());
+                    Console.WriteLine("Region: " + region);
+
+                    
+                    if(newDeploy)
+                    {
+                        if(config["AzureContainerInstance"]["Gpu"] != null && config["AzureContainerInstance"]["Gpu"]["Cores"].ToString() != "" && config["AzureContainerInstance"]["Gpu"]["Cores"].ToString() != "0" && config["AzureContainerInstance"]["Gpu"]["SKU"].ToString() != "")
+                        {
+                            Console.WriteLine("Creating a GPU container...");
+                            Task.Run(() =>
+                                azure.ContainerGroups.Define(aciName)
+                                .WithRegion(region)
+                                .WithNewResourceGroup(rgName)
+                                .WithLinux()
+                                .WithPublicImageRegistryOnly()
+                                // .WithNewAzureFileShareVolume(volumeMountName, shareName)
+                                .WithoutVolume()
+                                .DefineContainerInstance(aciName)
+                                    .WithImage(containerImageName)
+                                    .WithExternalTcpPorts(new int[]{ 80, 443 })
+                                    // .WithVolumeMountSetting(volumeMountName, "/aci/logs/")
+                                    .WithCpuCoreCount(Int32.Parse(config["AzureContainerInstance"]["Cores"].ToString()))
+                                    .WithMemorySizeInGB(Int32.Parse(config["AzureContainerInstance"]["Mem"].ToString()))
+                                    .WithGpuResource(
+                                        Int32.Parse(config["AzureContainerInstance"]["Gpu"]["Cores"].ToString()), 
+                                        config["AzureContainerInstance"]["Gpu"]["SKU"].ToString().ToLower() == "k80" ? GpuSku.K80 : config["AzureContainerInstance"]["Gpu"]["SKU"].ToString().ToLower() == "p100" ? GpuSku.P100 : GpuSku.V100
+                                        )
+                                    .WithEnvironmentVariables(new Dictionary<string,string>(){ 
+                                        {"coflows_config", File.ReadAllText(@"mnt/" + config_file)}, 
+                                        {"coflows_empty", "true"}
+                                        })
+                                    .WithStartingCommandLine("dotnet", "CoFlows.Server.quant.lnx.dll", "server")
+                                    .Attach()
+                                .WithDnsPrefix(config["AzureContainerInstance"]["Dns"].ToString()) 
+                                .CreateAsync()
+                            );
+                        }
+                        else
+                        {
+                            Console.WriteLine("Creating a standard container...");
+                            Task.Run(() =>
+                                azure.ContainerGroups.Define(aciName)
+                                .WithRegion(region)
+                                .WithNewResourceGroup(rgName)
+                                .WithLinux()
+                                .WithPublicImageRegistryOnly()
+                                // .WithNewAzureFileShareVolume(volumeMountName, shareName)
+                                .WithoutVolume()
+                                .DefineContainerInstance(aciName)
+                                    .WithImage(containerImageName)
+                                    .WithExternalTcpPorts(new int[]{ 80, 443 })
+                                    // .WithVolumeMountSetting(volumeMountName, "/aci/logs/")
+                                    .WithCpuCoreCount(Int32.Parse(config["AzureContainerInstance"]["Cores"].ToString()))
+                                    .WithMemorySizeInGB(Int32.Parse(config["AzureContainerInstance"]["Mem"].ToString()))
+                                    .WithEnvironmentVariables(new Dictionary<string,string>(){ 
+                                        {"coflows_config", File.ReadAllText(@"mnt/" + config_file)}, 
+                                        {"coflows_empty", "true"}
+                                        })
+                                    .WithStartingCommandLine("dotnet", "CoFlows.Server.quant.lnx.dll", "server")
+                                    .Attach()
+                                .WithDnsPrefix(config["AzureContainerInstance"]["Dns"].ToString()) 
+                                .CreateAsync()
+                            );
+                        }
+                        
+                    }
+                    else
+                    {
+                        if(config["AzureContainerInstance"]["Gpu"] != null && config["AzureContainerInstance"]["Gpu"]["Cores"].ToString() != "" && config["AzureContainerInstance"]["Gpu"]["Cores"].ToString() != "0" && config["AzureContainerInstance"]["Gpu"]["SKU"].ToString() != "")
+                        {
+                            Console.WriteLine("Creating a GPU container...");
+                            Task.Run(() =>
+                                azure.ContainerGroups.Define(aciName)
+                                .WithRegion(region)
+                                .WithNewResourceGroup(rgName)
+                                .WithLinux()
+                                .WithPublicImageRegistryOnly()
+                                // .WithNewAzureFileShareVolume(volumeMountName, shareName)
+                                .WithoutVolume()
+                                .DefineContainerInstance(aciName)
+                                    .WithImage(containerImageName)
+                                    .WithExternalTcpPorts(new int[]{ 80, 443 })
+                                    // .WithVolumeMountSetting(volumeMountName, "/aci/logs/")
+                                    .WithCpuCoreCount(Int32.Parse(config["AzureContainerInstance"]["Cores"].ToString()))
+                                    .WithMemorySizeInGB(Int32.Parse(config["AzureContainerInstance"]["Mem"].ToString()))
+                                    .WithGpuResource(
+                                        Int32.Parse(config["AzureContainerInstance"]["Gpu"]["Cores"].ToString()), 
+                                        config["AzureContainerInstance"]["Gpu"]["SKU"].ToString().ToLower() == "k80" ? GpuSku.K80 : config["AzureContainerInstance"]["Gpu"]["SKU"].ToString().ToLower() == "p100" ? GpuSku.P100 : GpuSku.V100
+                                        )
+                                    .WithEnvironmentVariables(new Dictionary<string,string>(){ 
+                                        {"coflows_config", File.ReadAllText(@"mnt/" + config_file)}, 
+                                        })
+                                    .WithStartingCommandLine("dotnet", "CoFlows.Server.quant.lnx.dll", "server")
+                                    .Attach()
+                                .WithDnsPrefix(config["AzureContainerInstance"]["Dns"].ToString()) 
+                                .CreateAsync()
+                            );
+                        }
+                        else
+                        {
+                            Console.WriteLine("Creating a standard container...");
+                            Task.Run(() =>
+                                azure.ContainerGroups.Define(aciName)
+                                .WithRegion(region)
+                                .WithNewResourceGroup(rgName)
+                                .WithLinux()
+                                .WithPublicImageRegistryOnly()
+                                // .WithNewAzureFileShareVolume(volumeMountName, shareName)
+                                .WithoutVolume()
+                                .DefineContainerInstance(aciName)
+                                    .WithImage(containerImageName)
+                                    .WithExternalTcpPorts(new int[]{ 80, 443 })
+                                    // .WithVolumeMountSetting(volumeMountName, "/aci/logs/")
+                                    .WithCpuCoreCount(Int32.Parse(config["AzureContainerInstance"]["Cores"].ToString()))
+                                    .WithMemorySizeInGB(Int32.Parse(config["AzureContainerInstance"]["Mem"].ToString()))
+                                    .WithEnvironmentVariables(new Dictionary<string,string>(){ 
+                                        {"coflows_config", File.ReadAllText(@"mnt/" + config_file)}, 
+                                        })
+                                    .WithStartingCommandLine("dotnet", "CoFlows.Server.quant.lnx.dll", "server")
+                                    .Attach()
+                                .WithDnsPrefix(config["AzureContainerInstance"]["Dns"].ToString()) 
+                                .CreateAsync()
+                            );
+                        }
+                        
+                    }
+                    // Poll for the container group
+                    IContainerGroup containerGroup = null;
+                    while(containerGroup == null)
+                    {
+                        containerGroup = azure.ContainerGroups.GetByResourceGroup(rgName, aciName);
 
                         Console.Write(".");
 
                         SdkContext.DelayProvider.Delay(1000);
                     }
+
+                    var lastContainerGroupState = containerGroup.Refresh().State;
+
                     Console.WriteLine();
-
-                    Console.WriteLine("Cleaned Resource Group: " + rgName);
-                }
-                catch (Exception e)
-                {
+                    Console.WriteLine($"Container group state: {containerGroup.Refresh().State}");
+                    // Poll until the container group is running
+                    while(containerGroup.State != "Running")
+                    {
+                        var containerGroupState = containerGroup.Refresh().State;
+                        if(containerGroupState != lastContainerGroupState)
+                        {
+                            Console.WriteLine();
+                            Console.WriteLine(containerGroupState);
+                            lastContainerGroupState = containerGroupState;
+                        }
+                        Console.Write(".");
+                        
+                        System.Threading.Thread.Sleep(1000);
+                    }
                     Console.WriteLine();
-                    Console.WriteLine("Did not create any resources in Azure. No clean up is necessary");
-                }
-                
-                Region region = Region.Create(config["AzureContainerInstance"]["Region"].ToString());
-                Console.WriteLine("Region: " + region);
+                    Console.WriteLine("Container instance IP address: " + containerGroup.IPAddress);
+                    Console.WriteLine("Container instance Ports: " + string.Join(",", containerGroup.ExternalTcpPorts));
 
-                
-                
-                if(config["AzureContainerInstance"]["Gpu"] != null && config["AzureContainerInstance"]["Gpu"]["Cores"].ToString() != "" && config["AzureContainerInstance"]["Gpu"]["Cores"].ToString() != "0" && config["AzureContainerInstance"]["Gpu"]["SKU"].ToString() != "")
-                {
-                    Console.WriteLine("Creating a GPU container...");
-                    Task.Run(() =>
-                        azure.ContainerGroups.Define(aciName)
-                        .WithRegion(region)
-                        .WithNewResourceGroup(rgName)
-                        .WithLinux()
-                        .WithPublicImageRegistryOnly()
-                        // .WithNewAzureFileShareVolume(volumeMountName, shareName)
-                        .WithoutVolume()
-                        .DefineContainerInstance(aciName)
-                            .WithImage(containerImageName)
-                            .WithExternalTcpPorts(new int[]{ 80, 443 })
-                            // .WithVolumeMountSetting(volumeMountName, "/aci/logs/")
-                            .WithCpuCoreCount(Int32.Parse(config["AzureContainerInstance"]["Cores"].ToString()))
-                            .WithMemorySizeInGB(Int32.Parse(config["AzureContainerInstance"]["Mem"].ToString()))
-                            .WithGpuResource(
-                                Int32.Parse(config["AzureContainerInstance"]["Gpu"]["Cores"].ToString()), 
-                                config["AzureContainerInstance"]["Gpu"]["SKU"].ToString().ToLower() == "k80" ? GpuSku.K80 : config["AzureContainerInstance"]["Gpu"]["SKU"].ToString().ToLower() == "p100" ? GpuSku.P100 : GpuSku.V100
-                                )
-                            .WithEnvironmentVariables(new Dictionary<string,string>(){ 
-                                {"coflows_config", File.ReadAllText(@"mnt/" + config_file)}, 
-                                })
-                            .WithStartingCommandLine("dotnet", "CoFlows.Server.quant.lnx.dll", "server")
-                            .Attach()
-                        .WithDnsPrefix(config["AzureContainerInstance"]["Dns"].ToString()) 
-                        .CreateAsync()
-                    );
-                }
-                else
-                {
-                    Console.WriteLine("Creating a standard container...");
-                    Task.Run(() =>
-                        azure.ContainerGroups.Define(aciName)
-                        .WithRegion(region)
-                        .WithNewResourceGroup(rgName)
-                        .WithLinux()
-                        .WithPublicImageRegistryOnly()
-                        // .WithNewAzureFileShareVolume(volumeMountName, shareName)
-                        .WithoutVolume()
-                        .DefineContainerInstance(aciName)
-                            .WithImage(containerImageName)
-                            .WithExternalTcpPorts(new int[]{ 80, 443 })
-                            // .WithVolumeMountSetting(volumeMountName, "/aci/logs/")
-                            .WithCpuCoreCount(Int32.Parse(config["AzureContainerInstance"]["Cores"].ToString()))
-                            .WithMemorySizeInGB(Int32.Parse(config["AzureContainerInstance"]["Mem"].ToString()))
-                            .WithEnvironmentVariables(new Dictionary<string,string>(){ 
-                                {"coflows_config", File.ReadAllText(@"mnt/" + config_file)}, 
-                                })
-                            .WithStartingCommandLine("dotnet", "CoFlows.Server.quant.lnx.dll", "server")
-                            .Attach()
-                        .WithDnsPrefix(config["AzureContainerInstance"]["Dns"].ToString()) 
-                        .CreateAsync()
-                    );
-                }
-                
+                    string serverUrl = config["AzureContainerInstance"]["Dns"].ToString() + "." + config["AzureContainerInstance"]["Region"].ToString().ToLower() + ".azurecontainer.io";
+                    Console.WriteLine("Container instance DNS Prefix: " + serverUrl);
+                    SdkContext.DelayProvider.Delay(10000);
 
-                // Poll for the container group
-                IContainerGroup containerGroup = null;
-                while(containerGroup == null)
-                {
-                    containerGroup = azure.ContainerGroups.GetByResourceGroup(rgName, aciName);
+                    Connection.Client.Init(serverUrl, sslFlag);
 
-                    Console.Write(".");
-
-                    SdkContext.DelayProvider.Delay(1000);
-                }
-
-                var lastContainerGroupState = containerGroup.Refresh().State;
-
-                Console.WriteLine();
-                Console.WriteLine($"Container group state: {containerGroup.Refresh().State}");
-                // Poll until the container group is running
-                while(containerGroup.State != "Running")
-                {
-                    var containerGroupState = containerGroup.Refresh().State;
-                    if(containerGroupState != lastContainerGroupState)
+                    for(int i = 0; i < 150 ; i++)
                     {
-                        Console.WriteLine();
-                        Console.WriteLine(containerGroupState);
-                        lastContainerGroupState = containerGroupState;
+                        try
+                        {
+                            SdkContext.DelayProvider.Delay(10000);
+                            // Console.WriteLine("Connecting to Cluster(" + i + "): " + serverUrl + " with SSL " + sslFlag + " " + config["Server"]["SecretKey"].ToString());
+                            if(!Connection.Client.Login(config["Server"]["SecretKey"].ToString()))
+                                throw new Exception("CoFlows Not connected!");
+
+                            Connection.Client.Connect();
+                            Console.WriteLine("Container connected! " + i);
+                            break;
+                        }
+                        catch(Exception e){ }
                     }
-                    Console.Write(".");
-                    
-                    System.Threading.Thread.Sleep(1000);
-                }
-                Console.WriteLine();
-                Console.WriteLine("Container instance IP address: " + containerGroup.IPAddress);
-                Console.WriteLine("Container instance Ports: " + string.Join(",", containerGroup.ExternalTcpPorts));
 
-                string serverUrl = config["AzureContainerInstance"]["Dns"].ToString() + "." + config["AzureContainerInstance"]["Region"].ToString().ToLower() + ".azurecontainer.io";
-                Console.WriteLine("Container instance DNS Prefix: " + serverUrl);
-                SdkContext.DelayProvider.Delay(10000);
-
-                Connection.Client.Init(serverUrl, sslFlag);
-
-                for(int i = 0; i < 150 ; i++)
-                {
-                    try
+                    if(newDeploy)
                     {
-                        SdkContext.DelayProvider.Delay(10000);
-                        // Console.WriteLine("Connecting to Cluster(" + i + "): " + serverUrl + " with SSL " + sslFlag + " " + config["Server"]["SecretKey"].ToString());
-                        if(!Connection.Client.Login(config["Server"]["SecretKey"].ToString()))
-                            throw new Exception("CoFlows Not connected!");
+                        QuantApp.Kernel.M.Factory = new MFactory();
 
-                        Connection.Client.Connect();
-                        Console.WriteLine("Container connected! " + i);
-                        break;
+                        Console.Write("Starting azure deployment... ");
+
+                        Code.UpdatePackageFile(CoFlows.Server.Program.workflow_name, new QuantApp.Engine.NuGetPackage(null, null), new QuantApp.Engine.PipPackage(null), new QuantApp.Engine.JarPackage(null));
+                        var resDeploy = Connection.Client.PublishPackage(CoFlows.Server.Program.workflow_name);
+                        var t1 = DateTime.Now;
+                        Console.WriteLine("Ended: " + t1 + " taking " + (t1 - t0));
+                        Console.Write("Result: " + resDeploy);
                     }
-                    catch(Exception e){ }
-                }
+                    else
+                        Console.WriteLine("Deployment done");
+            
+                };
 
-                QuantApp.Kernel.M.Factory = new MFactory();
-
-                Console.Write("Starting azure deployment... ");
-
-                Code.UpdatePackageFile(CoFlows.Server.Program.workflow_name, new QuantApp.Engine.NuGetPackage(null, null), new QuantApp.Engine.PipPackage(null), new QuantApp.Engine.JarPackage(null));
-                var resDeploy = Connection.Client.PublishPackage(CoFlows.Server.Program.workflow_name);
-                var t1 = DateTime.Now;
-                Console.WriteLine("Ended: " + t1 + " taking " + (t1 - t0));
-                Console.Write("Result: " + resDeploy);
+                runDeploy(true);
+                runDeploy(false);
             }
             else if(args != null && args.Length > 1 && args[0] == "aci" && args[1] == "remove")
             {
