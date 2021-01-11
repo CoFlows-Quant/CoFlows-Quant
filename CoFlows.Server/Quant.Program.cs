@@ -299,8 +299,6 @@ namespace CoFlows.Server.Quant
                 Console.WriteLine("QuantApp Server " + DateTime.Now);
                 Console.WriteLine("DB Connected");
 
-                // Console.WriteLine("Local deployment");
-
                 if(string.IsNullOrEmpty(config_env))
                 {
                     Console.WriteLine("config from file ");
