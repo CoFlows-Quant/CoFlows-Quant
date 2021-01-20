@@ -1,5 +1,7 @@
 # CoFlows - Containerized Polyglot Runtime (Interop)
 
+_We are actively looking for contributors, feedback and stars **(please click the upper right star button)**_
+
 **CoFlows CE (Community Edition)** helps developers create Web APIs and data-centric workflows in various languages including **Python, Java, Scala, C#, F#, VB and Javascript**. These workflows require the management of multiple facets that can be daunting for many coders. **CoFlows CE** aims to manage many of these facets including:
 * OpenAPI - Automatic generation of [OpenAPI specifications](https://www.openapis.org)
 * Agents - Scheduled [Cron](https://www.freeformatter.com/cron-expression-generator-quartz.html) and Asynchronous workflows
@@ -21,6 +23,9 @@ You can now choose to go through a few hands on tutorials or continue reading th
 
 
 ## General Overview
+
+_We are actively looking for contributors, feedback and stars **(please click the upper right star button)**_
+
 **CoFlows CE (Community Edition)** is a Containerized Polyglot Runtime that simplifies the development, hosting and deployment of powerful data-centric workflows. **CoFlows** enables developers to create rich **Web-APIs** with almost **zero boiler plate** and scheduled / reactive processes through a range of languages including CoreCLR (C#, F# and VB), JVM (Java and Scala), Python and Javascript. Furthermore, functions written in any of these languages can call each other within the same process with **full interop**. 
 
 For a bit context, one implementation of **CoFlows** is a system to track ships and the imports/exports between countries in order to predict supply and demand dynamics for various commodities. To this end, we worked with GPS data where it was essential for us to quickly plot transformed data on a map for correctly tuning the algorithms. Below is a visual of this example:
@@ -65,6 +70,8 @@ There are multiple sources pushing both the pros and cons of polyglot systems an
 * Javascript
 
 ### Notes
+_We are actively looking for contributors, feedback and stars **(please click the upper right star button)**_
+
 The Python link is achieved through a fork of the wonderful library [PythonNet](https://github.com/pythonnet/pythonnet "PythonNet").
 
 The link between the **JVM** and **CLR** is achieved through the [QuantApp.Kernel/JVM](https://github.com/CoFlows/CoFlows-CE/tree/master/QuantApp.Kernel/JVM "QAJVM") libraries which have been developed from scratch for this project.
