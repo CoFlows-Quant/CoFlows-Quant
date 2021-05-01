@@ -191,6 +191,13 @@ namespace AQI.AQILabs.Kernel
             Factory.AddCorporateAction(this, actions);
         }
 
+        /// <summary>
+        /// Function: Remove all corporate actions
+        /// </summary>
+        public void RemoveCorporateActions()
+        {
+            Factory.RemoveCorporateActions(this);
+        }
 
         private ConcurrentDictionary<DateTime, TimeSeries> _trDB = new ConcurrentDictionary<DateTime, TimeSeries>();
         public TimeSeries GetTotalReturnTimeSeries()

@@ -645,6 +645,17 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             }
         }
 
+        public void RemoveCorporateActions(Security security)
+        {
+            lock (corpObjLock)
+            {
+                ConcurrentDictionary<DateTime, List<CorporateAction>> result = null;
+                _corporateActions.TryRemove(security.ID, out result);
+
+                Database.DB["Kernel"].ExecuteCommand("DELETE FROM " + _corporateActionTableName + " WHERE InstrumentID = " + security.ID);
+            }
+        }
+        
         public readonly static object setObjLock = new object();
         public void SetProperty(Security security, string name, object value)
         {

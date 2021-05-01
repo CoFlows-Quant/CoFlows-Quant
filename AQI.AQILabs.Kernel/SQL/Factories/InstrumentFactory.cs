@@ -1169,7 +1169,8 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             }
 
             if(date == AQI.AQILabs.Kernel.Calendar.Close(date) && type == TimeSeriesType.Last)
-                this.AddTimeSeriesPoint(instrument, date, value, TimeSeriesType.Close, provider, onlyMemory);
+                this.AddTimeSeriesPoint(instrument, date, value, TimeSeriesType.Close, provider, true);
+                // this.AddTimeSeriesPoint(instrument, date, value, TimeSeriesType.Close, provider, onlyMemory);
 
             if (!onlyMemory && !instrument.SimulationObject && Instrument.TimeSeriesLoadFromDatabase)
                 Save(instrument);
@@ -1181,6 +1182,9 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
         {
             lock (removeTimeSeriesLock)
             {
+                string key = instrument.ID + "_" + (tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype) + "_" + provider.ID;   
+                TimeSeries outts = null;
+                _timeSeriesDatabase.TryRemove(key, out outts);
                 Database.DB[instrument.StrategyDB].ExecuteCommand("DELETE FROM " + _timeSeriesTableName + " WHERE ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1}", (int)tstype, provider.ID));
             }
         }
@@ -1212,7 +1216,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 foreach (ConcurrentDictionary<DateTime, TimeSeriesPoint> pts in ls.Values.ToList())
                     foreach (TimeSeriesPoint p in pts.Values.ToList())
                     {
-                        if (p.ID == instrument.ID && !double.IsNaN(p.value))
+                        if (p.ID == instrument.ID && !double.IsNaN(p.value) && !(p.type == TimeSeriesType.AdjClose || p.type == TimeSeriesType.Close))
                         {
                             string key = p.ID + "_" + p.type + "_" + p.ProviderID;
 

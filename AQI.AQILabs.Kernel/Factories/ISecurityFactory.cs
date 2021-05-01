@@ -44,5 +44,7 @@ namespace AQI.AQILabs.Kernel.Factories
         void AddCorporateAction(Security security, CorporateAction action);
 
         void AddCorporateAction(Security security, Dictionary<DateTime, List<CorporateAction>> actions);
+
+        void RemoveCorporateActions(Security security);
     }
 }
