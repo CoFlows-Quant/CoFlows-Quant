@@ -734,7 +734,7 @@ namespace AQI.AQILabs.Kernel
         {
             get
             {
-                return string.IsNullOrEmpty(_dbConnection) ? "DefaultStrategy" : _dbConnection;
+                return string.IsNullOrEmpty(_dbConnection) ? "Quant" : _dbConnection;
             }
             set
             {
@@ -754,7 +754,7 @@ namespace AQI.AQILabs.Kernel
         {
             get
             {
-                return string.IsNullOrEmpty(_dbConnection) ? "DefaultStrategy" : _dbConnection;
+                return string.IsNullOrEmpty(_dbConnection) ? "Quant" : _dbConnection;
             }
             set
             {

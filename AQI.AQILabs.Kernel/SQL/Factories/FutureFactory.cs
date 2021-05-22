@@ -66,7 +66,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "ID = " + security.ID;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_futureTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_futureTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
 
                 if (rows.Count == 0)
@@ -151,7 +151,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     rows.Add(r);
 
 
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
 
                     Future f = FindFuture(security);
 
@@ -182,7 +182,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _futureTableName;
                 string searchString = "ID = " + security.ID;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -246,7 +246,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = string.Format("UnderlyingInstrumentID={0} AND LastTradeDate>'{1:yyyy-MM-dd HH:mm:ss}' AND FirstNoticeDate>'{1:yyyy-MM-dd HH:mm:ss}' ORDER BY LastTradeDate", underlyingInstrument.ID, date);
                 string targetString = "*";
-                DataTable table = Database.DB["Kernel"].GetDataTable(_futureTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_futureTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
                     return null;
@@ -301,7 +301,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = string.Format("UnderlyingInstrumentID={0} AND LastTradeDate>'{1:yyyy-MM-dd HH:mm:ss}' AND FirstNoticeDate>'{1:yyyy-MM-dd HH:mm:ss} AND ContractSize={2}' ORDER BY LastTradeDate", underlyingInstrument.ID, date, contract_size);
                 string targetString = "*";
-                DataTable table = Database.DB["Kernel"].GetDataTable(_futureTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_futureTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
                     return null;
@@ -354,13 +354,13 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string searchString = string.Format("UnderlyingInstrumentID={0}", underlyingInstrument.ID);
                 string targetString = "TOP 1 *";
 
-                if(Database.DB["Kernel"] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter || Database.DB["Kernel"] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
+                if(Database.DB["Quant"] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter || Database.DB["Quant"] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
                 {
                     searchString += " LIMIT 1";
                     targetString = "*";
                 }
 
-                DataTable table = Database.DB["Kernel"].GetDataTable(_futureTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_futureTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
                     return false;
@@ -377,13 +377,13 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string searchString = string.Format("UnderlyingInstrumentID={0} AND LastTradeDate>'{1:yyyy-MM-dd HH:mm:ss}' ORDER BY LastTradeDate", id, lastTradeDate);
                 string targetString = "TOP 1 *";
 
-                if(Database.DB["Kernel"] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter || Database.DB["Kernel"] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
+                if(Database.DB["Quant"] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter || Database.DB["Quant"] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
                 {
                     searchString += " LIMIT 1";
                     targetString = "*";
                 }
 
-                DataTable table = Database.DB["Kernel"].GetDataTable(_futureTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_futureTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
                     return -1;
@@ -403,13 +403,13 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string searchString = string.Format("UnderlyingInstrumentID={0} AND LastTradeDate<'{1:yyyy-MM-dd HH:mm:ss}' ORDER BY LastTradeDate DESC", id, lastTradeDate);
                 string targetString = "TOP 1 *";
 
-                if(Database.DB["Kernel"] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter || Database.DB["Kernel"] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
+                if(Database.DB["Quant"] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter || Database.DB["Quant"] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
                 {
                     searchString += " LIMIT 1";
                     targetString = "*";
                 }
                 
-                DataTable table = Database.DB["Kernel"].GetDataTable(_futureTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_futureTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
                     return -1;
@@ -429,7 +429,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = null;
                 string targetString = "DISTINCT UnderlyingInstrumentID";
-                DataTable table = Database.DB["Kernel"].GetDataTable(_futureTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_futureTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
                     return null;
@@ -456,7 +456,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = underlyingInstrument != null ? string.Format("LastTradeDate>'{0:yyyy-MM-dd HH:mm:ss}' AND FirstNoticeDate>'{0:yyyy-MM-dd HH:mm:ss}' AND UnderlyingInstrumentID={1} ORDER BY LastTradeDate", date, underlyingInstrument.ID) : string.Format("LastTradeDate>'{0:yyyy-MM-dd HH:mm:ss}' AND FirstNoticeDate>'{0:yyyy-MM-dd HH:mm:ss}' ORDER BY LastTradeDate", date);
                 string targetString = "*";
-                DataTable table = Database.DB["Kernel"].GetDataTable(_futureTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_futureTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
                     return null;
@@ -485,7 +485,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = underlyingInstrument != null ? string.Format("LastTradeDate>'{0:yyyy-MM-dd HH:mm:ss}' AND FirstNoticeDate>'{0:yyyy-MM-dd HH:mm:ss}' AND UnderlyingInstrumentID={1} AND ContractSize={2} ORDER BY LastTradeDate", date, underlyingInstrument.ID, contract_size) : string.Format("LastTradeDate>'{0:yyyy-MM-dd HH:mm:ss}' AND FirstNoticeDate>'{0:yyyy-MM-dd HH:mm:ss}' ORDER BY LastTradeDate", date);
                 string targetString = "*";
-                DataTable table = Database.DB["Kernel"].GetDataTable(_futureTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_futureTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
                     return null;
@@ -577,7 +577,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row[name] = value;
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }
@@ -596,7 +596,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 DataRow row = rows[0];
                 row.Delete();
-                Database.DB["Kernel"].UpdateDataTable(table);
+                Database.DB["Quant"].UpdateDataTable(table);
             }
         }
     }

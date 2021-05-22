@@ -27,7 +27,7 @@ namespace AQI.AQILabs.Kernel
         None = 0, Equity = 1, Index = 2, Future = 3, Currency = 4, FXRate = 5, InterestRateFixing = 6,
         InterestRateSwap = 7, Fund = 8, ETF = 9, Warrant = 10, Commodity = 11, Option = 12,
         Strategy = 13, Portfolio = 14, Deposit = 15,
-        SpreadBet = 16
+        SpreadBet = 16, Crypto = 17
     };
 
     /// <summary>
@@ -42,7 +42,8 @@ namespace AQI.AQILabs.Kernel
         Credit = 7,
         FX = 8,
         RealEstate = 9,
-        Strategy = 10
+        Strategy = 10,
+        Crypto = 11
     };
 
     /// <summary>
@@ -588,8 +589,8 @@ namespace AQI.AQILabs.Kernel
         {
             get
             {
-                //return InstrumentType == Kernel.InstrumentType.Strategy ? ((Strategy)this).DBConnection : "Kernel";
-                return InstrumentType == Kernel.InstrumentType.Strategy && (this as Strategy) != null ? ((Strategy)this).DBConnection : "Kernel";
+                //return InstrumentType == Kernel.InstrumentType.Strategy ? ((Strategy)this).DBConnection : "Quant";
+                return InstrumentType == Kernel.InstrumentType.Strategy && (this as Strategy) != null ? ((Strategy)this).DBConnection : "Quant";
             }
         }
 

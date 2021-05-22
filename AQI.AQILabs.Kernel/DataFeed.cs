@@ -34,7 +34,7 @@ namespace AQI.AQILabs.Kernel
             string searchString = string.Format(" ORDER BY Timestamp DESC");
             string targetString = "TOP 1 *";
 
-            DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName + searchString, targetString, null);
+            DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName + searchString, targetString, null);
 
             DataRowCollection rows = table.Rows;
             if (rows.Count == 0)
@@ -47,13 +47,13 @@ namespace AQI.AQILabs.Kernel
         {
             string searchString = null;
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
             DataRowCollection rows = table.Rows;
 
             DataRow r = table.NewRow();
             r["Timestamp"] = date;
             rows.Add(r);
-            Database.DB["Kernel"].UpdateDataTable(table);
+            Database.DB["Quant"].UpdateDataTable(table);
         }
 
         public static void UpdateData()

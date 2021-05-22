@@ -113,7 +113,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     string searchString = "ID = " + instrument.ID;
                     string targetString = null;
 
-                    DataTable table = Database.DB["Kernel"].GetDataTable(_portfolioTableName, targetString, searchString);
+                    DataTable table = Database.DB["Quant"].GetDataTable(_portfolioTableName, targetString, searchString);
                     DataRowCollection rows = table.Rows;
 
 
@@ -130,7 +130,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
 
                         rows.Add(r);
-                        Database.DB["Kernel"].UpdateDataTable(table);
+                        Database.DB["Quant"].UpdateDataTable(table);
 
                         Portfolio p = FindPortfolio(instrument, false);
                         if (parent != null)
@@ -198,7 +198,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     string searchString = "ID = " + instrument.ID;
                     string targetString = null;
 
-                    DataTable mainTable = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                    DataTable mainTable = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                     if (mainTable.Rows.Count == 0)
                         return null;
@@ -268,7 +268,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     searchString = "ID = " + p.ID;
                     targetString = null;
 
-                    DataTable reserveTable = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                    DataTable reserveTable = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                     if (!_reservesTables.ContainsKey(instrument.ID))
                         _reservesTables.TryAdd(p.ID, reserveTable);
@@ -297,7 +297,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             string searchString = "CustodianID LIKE '" + custodian + (accountid == null ? "'" : "' AND AccountID LIKE '" + accountid + "'");
             string targetString = null;
 
-            DataTable mainTable = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+            DataTable mainTable = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
             List<Portfolio> res = new List<Portfolio>();
             
@@ -891,7 +891,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 if (!_reservesTables.ContainsKey(portfolio.ID))
                 {
-                    DataTable reserveTable = Database.DB["Kernel"].GetDataTable(_portfolioReservesTableName, null, "ID = " + portfolio.ID);
+                    DataTable reserveTable = Database.DB["Quant"].GetDataTable(_portfolioReservesTableName, null, "ID = " + portfolio.ID);
                     _reservesTables.TryAdd(portfolio.ID, reserveTable);
                 }
 
@@ -923,7 +923,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 if (!_reservesTables.ContainsKey(portfolio.ID))
                 {
-                    DataTable reserveTable = Database.DB["Kernel"].GetDataTable(_portfolioReservesTableName, null, "ID = " + portfolio.ID);
+                    DataTable reserveTable = Database.DB["Quant"].GetDataTable(_portfolioReservesTableName, null, "ID = " + portfolio.ID);
                     _reservesTables.TryAdd(portfolio.ID, reserveTable);
                 }
 
@@ -941,7 +941,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     r["shortReserveID"] = (shortInstrument == null ? -1 : shortInstrument.ID);
                     _reservesTables[portfolio.ID].Rows.Add(r);
 
-                    Database.DB["Kernel"].UpdateDataTable(_reservesTables[portfolio.ID]);
+                    Database.DB["Quant"].UpdateDataTable(_reservesTables[portfolio.ID]);
                 }
                 else
                 {
@@ -966,7 +966,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                                 changed = true;
                             }
                     if (changed)
-                        Database.DB["Kernel"].UpdateDataTable(_reservesTables[portfolio.ID]);
+                        Database.DB["Quant"].UpdateDataTable(_reservesTables[portfolio.ID]);
                 }
             }
         }
@@ -1038,14 +1038,14 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 {
                     if (!_reservesTables.ContainsKey(portfolio.ID))
                     {
-                        DataTable reserveTable = Database.DB["Kernel"].GetDataTable(_portfolioReservesTableName, null, "ID = " + portfolio.ID);
+                        DataTable reserveTable = Database.DB["Quant"].GetDataTable(_portfolioReservesTableName, null, "ID = " + portfolio.ID);
                         _reservesTables.TryAdd(portfolio.ID, reserveTable);
                     }
 
                     foreach (DataRow row in _reservesTables[portfolio.ID].Rows)
                         row.Delete();
 
-                    Database.DB["Kernel"].UpdateDataTable(_reservesTables[portfolio.ID]);
+                    Database.DB["Quant"].UpdateDataTable(_reservesTables[portfolio.ID]);
                 }
             }
         }
@@ -1098,13 +1098,13 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _portfolioReservesTableName;
                 string searchString = "ID = " + portfolio.ID;
 
-                Database.DB["Kernel"].ExecuteCommand("DELETE FROM " + tableName + " WHERE " + searchString);
+                Database.DB["Quant"].ExecuteCommand("DELETE FROM " + tableName + " WHERE " + searchString);
             }
             catch (Exception e) { SystemLog.Write(e); }
 
 
 
-            Database.DB["Kernel"].ExecuteCommand("DELETE FROM " + _portfolioTableName + " WHERE ID = " + portfolio.ID);
+            Database.DB["Quant"].ExecuteCommand("DELETE FROM " + _portfolioTableName + " WHERE ID = " + portfolio.ID);
         }
         public void Remove1(Portfolio portfolio)
         {
@@ -1155,7 +1155,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             catch (Exception e) { SystemLog.Write(e); }
 
             if (!_mainTables.ContainsKey(portfolio.ID))
-                _mainTables.TryAdd(portfolio.ID, Database.DB["Kernel"].GetDataTable(_portfolioTableName, null, "ID = " + portfolio.ID));
+                _mainTables.TryAdd(portfolio.ID, Database.DB["Quant"].GetDataTable(_portfolioTableName, null, "ID = " + portfolio.ID));
 
 
             DataTable table = _mainTables[portfolio.ID];
@@ -1168,7 +1168,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 DataRow row = rows[0];
                 row.Delete();
-                Database.DB["Kernel"].UpdateDataTable(table);
+                Database.DB["Quant"].UpdateDataTable(table);
             }
 
         }
@@ -1218,7 +1218,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 if (instrument.SimulationObject)
                     return;
                 if (!_mainTables.ContainsKey(instrument.ID))
-                    _mainTables.TryAdd(instrument.ID, Database.DB["Kernel"].GetDataTable(_portfolioTableName, null, "ID = " + instrument.ID));
+                    _mainTables.TryAdd(instrument.ID, Database.DB["Quant"].GetDataTable(_portfolioTableName, null, "ID = " + instrument.ID));
 
                 DataTable table = _mainTables[instrument.ID];
 
@@ -1230,7 +1230,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row[name] = value;
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }

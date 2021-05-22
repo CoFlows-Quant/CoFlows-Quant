@@ -1875,7 +1875,7 @@ namespace AQI.AQILabs.Kernel
         {
             get
             {
-                return Strategy != null ? Strategy.DBConnection : "DefaultStrategy";
+                return Strategy != null ? Strategy.DBConnection : "Quant";
             }
         }
 

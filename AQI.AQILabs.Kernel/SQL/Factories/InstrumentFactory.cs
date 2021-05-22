@@ -71,13 +71,13 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = "Name LIKE '" + name + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
 
                 if (rows.Count == 0)
                 {
                     int id = -1;
-                    DataTable idtable = Database.DB["Kernel"].GetDataTable(_mainTableName, "MAX(ID)", null);
+                    DataTable idtable = Database.DB["Quant"].GetDataTable(_mainTableName, "MAX(ID)", null);
                     foreach (DataRow ir in idtable.Rows)
                     {
                         if(ir[0] is DBNull)
@@ -97,11 +97,11 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     r["FundingTypeID"] = (int)fundingType;
                     r["CustomCalendarID"] = -1;
                     rows.Add(r);
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
 
                     string searchStringSystemData = "ID = " + id;
                     string targetStringSystemData = null;
-                    DataTable tableSystemData = Database.DB["Kernel"].GetDataTable(_systemDataTableName, targetStringSystemData, searchStringSystemData);
+                    DataTable tableSystemData = Database.DB["Quant"].GetDataTable(_systemDataTableName, targetStringSystemData, searchStringSystemData);
                     DataRow rSystemData = tableSystemData.NewRow();
                     rSystemData["ID"] = id;
                     rSystemData["CreateTime"] = createTime;
@@ -120,27 +120,27 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
 
                     tableSystemData.Rows.Add(rSystemData);
-                    Database.DB["Kernel"].UpdateDataTable(tableSystemData);
+                    Database.DB["Quant"].UpdateDataTable(tableSystemData);
 
                     string searchStringThirdPartyData = "ID = " + id;
                     string targetStringThirdPartyData = null;
-                    DataTable tableThirdPartyData = Database.DB["Kernel"].GetDataTable(_thirdPartyDataTableName, targetStringThirdPartyData, searchStringThirdPartyData);
+                    DataTable tableThirdPartyData = Database.DB["Quant"].GetDataTable(_thirdPartyDataTableName, targetStringThirdPartyData, searchStringThirdPartyData);
                     DataRow rThirdPartyData = tableThirdPartyData.NewRow();
                     rThirdPartyData["ID"] = id;
                     rThirdPartyData["BloombergTicker"] = null;
                     rThirdPartyData["ReutersRIC"] = null;
                     tableThirdPartyData.Rows.Add(rThirdPartyData);
-                    Database.DB["Kernel"].UpdateDataTable(tableThirdPartyData);
+                    Database.DB["Quant"].UpdateDataTable(tableThirdPartyData);
 
                     string searchStringCategories = "ID = " + id;
                     string targetStringCategories = null;
-                    DataTable tableCategories = Database.DB["Kernel"].GetDataTable(_categoriesTableName, targetStringCategories, searchStringCategories);
+                    DataTable tableCategories = Database.DB["Quant"].GetDataTable(_categoriesTableName, targetStringCategories, searchStringCategories);
                     DataRow rCategories = tableCategories.NewRow();
                     rCategories["ID"] = id;
                     rCategories["AssetClass"] = AssetClass.NoAssetClass;
                     rCategories["GeographicalRegion"] = GeographicalRegion.NoRegion;
                     tableCategories.Rows.Add(rCategories);
-                    Database.DB["Kernel"].UpdateDataTable(tableCategories);
+                    Database.DB["Quant"].UpdateDataTable(tableCategories);
 
                     Instrument i = FindSecureInstrument(id);
 
@@ -236,7 +236,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
             string searchString = "Name LIKE '" + name + "'";
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
             DataRowCollection rows = table.Rows;
             if (rows.Count == 0)
@@ -258,13 +258,13 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             string searchString = "Name LIKE '%" + name + "%' OR Description LIKE '%" + name + "%'";
             string targetString = "Top 100 ID";
 
-            if(Database.DB["Kernel"] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter || Database.DB["Kernel"] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
+            if(Database.DB["Quant"] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter || Database.DB["Quant"] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
             {
                 searchString += " LIMIT 100";
                 targetString = "ID";
             }
 
-            DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
             List<Instrument> ret = new List<Instrument>();
 
@@ -370,7 +370,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string searchString = _mainTableName + ".ID = " + id + " AND " + _mainTableName + ".ID = " + _systemDataTableName + ".ID AND " + _mainTableName + ".ID = " + _thirdPartyDataTableName + ".ID AND " + _mainTableName + ".ID = " + _categoriesTableName + ".ID";
                 
                 string targetString = "Name, LongDescription, Description, InstrumentTypeID, CurrencyID, FundingTypeID, CustomCalendarID, CreateTime, UpdateTime, TimeSeriesAccessType, TimeSeriesRollType, ExecutionCost, CarryCostLong, CarryCostShort, CarryCostDayCount, CarryCostDayCountBase, Deleted, BloombergTicker, ReutersRIC, CSIUAMarket, CSIDeliveryCode, CSINumCode, YahooTicker, AssetClass, GeographicalRegion";
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName + "," + _systemDataTableName + "," + _thirdPartyDataTableName + "," + _categoriesTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName + "," + _systemDataTableName + "," + _thirdPartyDataTableName + "," + _categoriesTableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -525,7 +525,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = _mainTableName + ".ID = " + id + " AND " + _mainTableName + ".ID = " + _systemDataTableName + ".ID AND " + _mainTableName + ".ID = " + _thirdPartyDataTableName + ".ID AND " + _mainTableName + ".ID = " + _categoriesTableName + ".ID";
                 string targetString = "Name, LongDescription, Description, InstrumentTypeID, CurrencyID, FundingTypeID, CustomCalendarID, CreateTime, UpdateTime, TimeSeriesAccessType, TimeSeriesRollType, ExecutionCost, CarryCostLong, CarryCostShort, CarryCostDayCount, CarryCostDayCountBase, Deleted, BloombergTicker, ReutersRIC, CSIUAMarket, CSIDeliveryCode, CSINumCode, YahooTicker, AssetClass, GeographicalRegion";
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName + "," + _systemDataTableName + "," + _thirdPartyDataTableName + "," + _categoriesTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName + "," + _systemDataTableName + "," + _thirdPartyDataTableName + "," + _categoriesTableName, targetString, searchString);
                 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -617,7 +617,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     {
                         string search = "ID = " + instrument.ID;
                         string target = null;
-                        _mainTables.Add(instrument.ID, Database.DB["Kernel"].GetDataTable(_mainTableName, target, search));
+                        _mainTables.Add(instrument.ID, Database.DB["Quant"].GetDataTable(_mainTableName, target, search));
                     }
 
                     table = _mainTables[instrument.ID];
@@ -628,7 +628,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     {
                         string search = "ID = " + instrument.ID;
                         string target = null;
-                        _systemTables.Add(instrument.ID, Database.DB["Kernel"].GetDataTable(_systemDataTableName, target, search));
+                        _systemTables.Add(instrument.ID, Database.DB["Quant"].GetDataTable(_systemDataTableName, target, search));
                     }
 
                     table = _systemTables[instrument.ID];
@@ -639,7 +639,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     {
                         string search = "ID = " + instrument.ID;
                         string target = null;
-                        _thirdPartyTables.Add(instrument.ID, Database.DB["Kernel"].GetDataTable(_thirdPartyDataTableName, target, search));
+                        _thirdPartyTables.Add(instrument.ID, Database.DB["Quant"].GetDataTable(_thirdPartyDataTableName, target, search));
                     }
 
                     table = _thirdPartyTables[instrument.ID];
@@ -650,7 +650,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     {
                         string search = "ID = " + instrument.ID;
                         string target = null;
-                        _categoriesTables.Add(instrument.ID, Database.DB["Kernel"].GetDataTable(_categoriesTableName, target, search));
+                        _categoriesTables.Add(instrument.ID, Database.DB["Quant"].GetDataTable(_categoriesTableName, target, search));
                     }
 
                     table = _categoriesTables[instrument.ID];
@@ -666,7 +666,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     if (row[name] != value)
                     {
                         row[name] = value;
-                        Database.DB["Kernel"].UpdateDataTable(table);
+                        Database.DB["Quant"].UpdateDataTable(table);
                     }
                 }
             }
@@ -695,7 +695,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
             string searchString = "CSIUAMarket LIKE '" + CSIUAMarket + "' AND CSIDeliveryCode " + (CSIDeliveryCode == -1 ? " IS NULL" : " = " + (CSIDeliveryCode.ToString()));
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_thirdPartyDataTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_thirdPartyDataTableName, targetString, searchString);
 
             DataRowCollection rows = table.Rows;
             if (rows.Count == 0)
@@ -730,7 +730,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
             string searchString = "CSINumCode = '" + CSINumCode + "' AND CSIDeliveryCode " + (CSIDeliveryCode == -1 ? " IS NULL" : " = " + (CSIDeliveryCode.ToString()));
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_thirdPartyDataTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_thirdPartyDataTableName, targetString, searchString);
 
             DataRowCollection rows = table.Rows;
             if (rows.Count == 0)
@@ -757,7 +757,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
         {
             string searchString = null;
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
             DataRowCollection rows = table.Rows;
             List<Instrument> list = new List<Instrument>();
@@ -787,7 +787,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
         {
             string searchString = string.Format("InstrumentTypeID={0}", (int)type);
             string targetString = "*";
-            DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
             DataRowCollection rows = table.Rows;
 
@@ -832,11 +832,11 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             if (_instrumentNameDB.ContainsKey(instrument.Name))
                 _instrumentNameDB.TryRemove(instrument.Name, out v);
 
-            Database.DB["Kernel"].ExecuteCommand("DELETE FROM " + _systemDataTableName + " WHERE ID = " + instrument.ID);
+            Database.DB["Quant"].ExecuteCommand("DELETE FROM " + _systemDataTableName + " WHERE ID = " + instrument.ID);
 
-            Database.DB["Kernel"].ExecuteCommand("DELETE FROM " + _thirdPartyDataTableName + " WHERE ID = " + instrument.ID);
+            Database.DB["Quant"].ExecuteCommand("DELETE FROM " + _thirdPartyDataTableName + " WHERE ID = " + instrument.ID);
             
-            Database.DB["Kernel"].ExecuteCommand("DELETE FROM " + _mainTableName + " WHERE ID = " + instrument.ID);
+            Database.DB["Quant"].ExecuteCommand("DELETE FROM " + _mainTableName + " WHERE ID = " + instrument.ID);
         }
 
 
@@ -895,8 +895,11 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
             string tableName = _timeSeriesTableName;
             string searchString = instrument.InstrumentType == InstrumentType.Strategy ? "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1}  Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID) : "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1} AND (CONVERT(TIME,Timestamp) = '23:59:59.990')  Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID);
-            if(Database.DB[instrument.StrategyDB] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter || Database.DB[instrument.StrategyDB] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
+            if(Database.DB[instrument.StrategyDB] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter)
                 searchString = instrument.InstrumentType == InstrumentType.Strategy ? "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1}  Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID) : "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1} AND (strftime('%H:%M:%f', Timestamp) = '23:59:59.990')  Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID);
+            else if(Database.DB[instrument.StrategyDB] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
+                searchString = instrument.InstrumentType == InstrumentType.Strategy ? "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1}  Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID) : "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1} AND ((Timestamp::time) = ('23:59:59.990'::time))  Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID);
+
 
 
             if (tstype == TimeSeriesType.Tick || Instrument.TimeSeriesLoadFromDatabaseIntraday)
@@ -909,8 +912,10 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 else
                 {
                     
-                    if(Database.DB[instrument.StrategyDB] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter || Database.DB[instrument.StrategyDB] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
+                    if(Database.DB[instrument.StrategyDB] is QuantApp.Kernel.Adapters.SQL.SQLiteDataSetAdapter)
                         searchString = instrument.InstrumentType == InstrumentType.Strategy ? "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1}  Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID) : "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1} AND (strftime('%H:%M:%f', Timestamp) <> '23:59:59.990') Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID);
+                    else if(Database.DB[instrument.StrategyDB] is QuantApp.Kernel.Adapters.SQL.PostgresDataSetAdapter)
+                        searchString = instrument.InstrumentType == InstrumentType.Strategy ? "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1}  Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID) : "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1} AND ((Timestamp::time) <> ('23:59:59.990'::time)) Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID);
                     else
                         searchString = instrument.InstrumentType == InstrumentType.Strategy ? "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1}  Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID) : "ID = " + instrument.ID + string.Format(" AND TimeSeriesTypeID={0} AND ProviderID={1} AND (CONVERT(TIME,Timestamp) <> '23:59:59.990') Order By Timestamp", (int)(tstype == TimeSeriesType.Close ? TimeSeriesType.Last : tstype), provider.ID);
                 }

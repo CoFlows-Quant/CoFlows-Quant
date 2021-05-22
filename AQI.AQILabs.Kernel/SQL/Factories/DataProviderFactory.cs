@@ -57,7 +57,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = null;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
 
                 var lrows = from lrow in new LINQList<DataRow>(rows)
@@ -68,12 +68,12 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 {
                     DataRow r = table.NewRow();
 
-                    int id = Database.DB["Kernel"].NextAvailableID(table.Rows, "ID");
+                    int id = Database.DB["Quant"].NextAvailableID(table.Rows, "ID");
                     r["ID"] = id;
                     r["Name"] = name;
                     r["Description"] = description;
                     rows.Add(r);
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
 
                     return FindDataProvider(id);
                 }
@@ -89,7 +89,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "Name LIKE '" + name + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -116,7 +116,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "ID = " + id;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -149,7 +149,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row[name] = value;
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }

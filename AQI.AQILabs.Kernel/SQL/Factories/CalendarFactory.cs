@@ -36,7 +36,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = null;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
 
 
@@ -47,12 +47,12 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 if (lrows.Count() == 0)
                 {
                     DataRow r = table.NewRow();
-                    int id = Database.DB["Kernel"].NextAvailableID(table.Rows, "ID");
+                    int id = Database.DB["Quant"].NextAvailableID(table.Rows, "ID");
                     r["ID"] = id;
                     r["Name"] = name;
                     r["Description"] = description;
                     rows.Add(r);
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
 
                     Calendar cal = FindCalendar(id);
 
@@ -132,7 +132,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "ID = " + id;
                 string targetString = null;
-                DataTable mainTable = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable mainTable = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
                 DataRowCollection rows = mainTable.Rows;
                 if (rows.Count == 0)
@@ -149,7 +149,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 searchString = "ID = " + cal.ID;
                 targetString = null;
-                DataTable dateTable = Database.DB["Kernel"].GetDataTable(_dateTableName, targetString, searchString);
+                DataTable dateTable = Database.DB["Quant"].GetDataTable(_dateTableName, targetString, searchString);
 
                 _dateTables.Add(cal.ID, dateTable);
 
@@ -166,7 +166,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "Name LIKE '" + name + "'";
                 string targetString = null;
-                DataTable mainTable = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable mainTable = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
                 DataRowCollection rows = mainTable.Rows;
                 if (rows.Count == 0)
@@ -185,7 +185,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 searchString = "ID = " + cal.ID;
                 targetString = null;
-                DataTable dateTable = Database.DB["Kernel"].GetDataTable(_dateTableName, targetString, searchString);
+                DataTable dateTable = Database.DB["Quant"].GetDataTable(_dateTableName, targetString, searchString);
 
                 _dateTables.Add(cal.ID, dateTable);
 
@@ -198,7 +198,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
         {
             string searchString = null;
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
             DataRowCollection rows = table.Rows;
             if (rows.Count == 0)
@@ -218,7 +218,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
         {
             string searchString = null;
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
             DataRowCollection rows = table.Rows;
             if (rows.Count == 0)
@@ -246,7 +246,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row[name] = value;
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }
@@ -277,13 +277,13 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 if (_mainTables.ContainsKey(calendar.ID))
                 {
                     DataTable table = _mainTables[calendar.ID];
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
 
                 if (_dateTables.ContainsKey(calendar.ID))
                 {
                     DataTable table = _dateTables[calendar.ID];
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }
@@ -300,7 +300,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 DataRow row = rows[0];
                 row.Delete();
-                Database.DB["Kernel"].DeleteDataTable(table);
+                Database.DB["Quant"].DeleteDataTable(table);
 
 
                 table = _dateTables[calendar.ID];
@@ -310,7 +310,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     foreach (DataRow r in rs)
                         r.Delete();
 
-                    Database.DB["Kernel"].DeleteDataTable(table);
+                    Database.DB["Quant"].DeleteDataTable(table);
                 }
 
                 _calendarIdDB.Remove(calendar.ID);

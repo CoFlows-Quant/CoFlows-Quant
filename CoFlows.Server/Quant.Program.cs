@@ -1414,28 +1414,6 @@ namespace CoFlows.Server.Quant
 
 
                 QuantApp.Kernel.M.Factory = new QuantApp.Kernel.Adapters.SQL.Factories.SQLMFactory();
-
-
-                // Quant
-                Calendar.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLCalendarFactory();
-                Currency.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLCurrencyFactory();
-                CurrencyPair.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLCurrencyPairFactory();
-                DataProvider.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLDataProviderFactory();
-                Exchange.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLExchangeFactory();
-
-                Instrument.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLInstrumentFactory();
-                Security.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLSecurityFactory();
-                Future.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLFutureFactory();
-                Portfolio.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLPortfolioFactory();
-                Strategy.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLStrategyFactory();
-                Market.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLMarketFactory();
-
-                InterestRate.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLInterestRateFactory();
-                Deposit.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLDepositFactory();
-                InterestRateSwap.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLInterestRateSwapFactory();
-
-                DataProvider.DefaultProvider = DataProvider.FindDataProvider("AQI");
-
             }
 
             if (!QuantApp.Kernel.Database.DB.ContainsKey("CloudApp"))
@@ -1467,30 +1445,50 @@ namespace CoFlows.Server.Quant
                 Group.Factory = new QuantApp.Kernel.Adapters.SQL.Factories.SQLGroupFactory();
             }
 
-            if (!QuantApp.Kernel.Database.DB.ContainsKey("DefaultStrategy"))
+            if (!QuantApp.Kernel.Database.DB.ContainsKey("Quant"))
             {
                 if(CloudAppConnectString.StartsWith("Server="))
                 {
                     if(KernelConnectString == StrategyConnectString)
-                        QuantApp.Kernel.Database.DB.Add("DefaultStrategy", QuantApp.Kernel.Database.DB["Kernel"]);
+                        QuantApp.Kernel.Database.DB.Add("Quant", QuantApp.Kernel.Database.DB["Kernel"]);
                     else
                     {
                         MSSQLDataSetAdapter StrategyDataAdapter = new MSSQLDataSetAdapter();
                         StrategyDataAdapter.ConnectString = StrategyConnectString;
-                        QuantApp.Kernel.Database.DB.Add("DefaultStrategy", StrategyDataAdapter);
+                        QuantApp.Kernel.Database.DB.Add("Quant", StrategyDataAdapter);
                     }
                 }
                 else
                 {
                     if(KernelConnectString == StrategyConnectString)
-                        QuantApp.Kernel.Database.DB.Add("DefaultStrategy", QuantApp.Kernel.Database.DB["Kernel"]);
+                        QuantApp.Kernel.Database.DB.Add("Quant", QuantApp.Kernel.Database.DB["Kernel"]);
                     else
                     {
                         SQLiteDataSetAdapter StrategyDataAdapter = new SQLiteDataSetAdapter();
                         StrategyDataAdapter.ConnectString = StrategyConnectString;
-                        QuantApp.Kernel.Database.DB.Add("DefaultStrategy", StrategyDataAdapter);
+                        QuantApp.Kernel.Database.DB.Add("Quant", StrategyDataAdapter);
                     }
                 }
+
+                // Quant
+                Calendar.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLCalendarFactory();
+                Currency.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLCurrencyFactory();
+                CurrencyPair.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLCurrencyPairFactory();
+                DataProvider.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLDataProviderFactory();
+                Exchange.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLExchangeFactory();
+
+                Instrument.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLInstrumentFactory();
+                Security.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLSecurityFactory();
+                Future.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLFutureFactory();
+                Portfolio.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLPortfolioFactory();
+                Strategy.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLStrategyFactory();
+                Market.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLMarketFactory();
+
+                InterestRate.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLInterestRateFactory();
+                Deposit.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLDepositFactory();
+                InterestRateSwap.Factory = new AQI.AQILabs.Kernel.Adapters.SQL.Factories.SQLInterestRateSwapFactory();
+
+                DataProvider.DefaultProvider = DataProvider.FindDataProvider("AQI");
             }
         }
 

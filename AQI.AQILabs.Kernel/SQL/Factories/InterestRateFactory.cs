@@ -68,7 +68,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row[name] = value;
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }
@@ -82,7 +82,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "ID = " + instrument.ID;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_interestRateTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_interestRateTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
 
                 if (rows.Count == 0)
@@ -92,7 +92,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     r["Maturity"] = maturity;
                     r["MaturityType"] = (int)maturityType;
                     rows.Add(r);
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
 
                     return InterestRate.FindInterestRate(instrument);
                 }
@@ -111,7 +111,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     string tableName = _interestRateTableName;
                     string searchString = "ID = " + instrument.ID;
                     string targetString = null;
-                    DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                    DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                     DataRowCollection rows = table.Rows;
                     if (rows.Count == 0)
@@ -150,7 +150,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 DataRow row = rows[0];
                 row.Delete();
-                Database.DB["Kernel"].UpdateDataTable(table);
+                Database.DB["Quant"].UpdateDataTable(table);
             }
         }
     }
@@ -205,7 +205,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row[name] = value;
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }
@@ -217,7 +217,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
             string searchString = null;// "Name LIKE '" + name + "'";
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_depositTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_depositTableName, targetString, searchString);
             DataRowCollection rows = table.Rows;
 
 
@@ -231,7 +231,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 r["ID"] = rate.ID;
                 r["DayCountConvention"] = (int)dayCount;
                 rows.Add(r);
-                Database.DB["Kernel"].UpdateDataTable(table);
+                Database.DB["Quant"].UpdateDataTable(table);
 
                 return FindDeposit(rate);
             }
@@ -245,7 +245,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             string tableName = _depositTableName;
             string searchString = "ID = " + rate.ID;
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
             DataRowCollection rows = table.Rows;
             if (rows.Count == 0)
@@ -279,7 +279,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 DataRow row = rows[0];
                 row.Delete();
-                Database.DB["Kernel"].UpdateDataTable(table);
+                Database.DB["Quant"].UpdateDataTable(table);
             }
         }
     }
@@ -334,7 +334,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row[name] = value;
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }
@@ -348,7 +348,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = null;// "Name LIKE '" + name + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_interestRateSwapTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_interestRateSwapTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
 
 
@@ -368,7 +368,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     r["FixedDayCountConvention"] = (int)fixedDayCount;
                     r["Effective"] = effective;
                     rows.Add(r);
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
 
                     return FindInterestRateSwap(instrument);
                 }
@@ -388,7 +388,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _interestRateSwapTableName;
                 string searchString = "ID = " + instrument.ID;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -432,7 +432,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row.Delete();
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }

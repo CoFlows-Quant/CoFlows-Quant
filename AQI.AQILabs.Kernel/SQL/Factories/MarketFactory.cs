@@ -27,7 +27,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
         public void Initialize()
         {
             if (_instructionTable == null)
-                _instructionTable = Database.DB["Kernel"].GetDataTable(_instructionsTableName, null, null);
+                _instructionTable = Database.DB["Quant"].GetDataTable(_instructionsTableName, null, null);
         }
 
 
@@ -266,7 +266,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             lock (objLock)
             {
                 if (_instructionTable == null)
-                    _instructionTable = Database.DB["Kernel"].GetDataTable(_instructionsTableName, null, null);
+                    _instructionTable = Database.DB["Quant"].GetDataTable(_instructionsTableName, null, null);
 
                 foreach (DataRow row in _instructionTable.Rows)
                 {
@@ -350,7 +350,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     _instructionTable.Rows.Add(r);
 
-                    Database.DB["Kernel"].UpdateDataTable(_instructionTable);
+                    Database.DB["Quant"].UpdateDataTable(_instructionTable);
                 }
                 else
                 {
@@ -372,7 +372,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                         }
 
                     if (changed)
-                        Database.DB["Kernel"].UpdateDataTable(_instructionTable);
+                        Database.DB["Quant"].UpdateDataTable(_instructionTable);
                 }
             }
         }

@@ -79,7 +79,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     string tableName = _StrategyTableName;
                     string searchString = "ID = " + instrument.ID;
                     string targetString = null;
-                    DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                    DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                     Strategy strat = null;
                     if (table.Rows.Count != 0)
@@ -661,7 +661,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row.Delete();
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
                 Database.DB[strategy.StrategyDB].ExecuteCommand("DELETE FROM " + _StrategyMemoryTableName + " WHERE ID = " + strategy.ID);
 
@@ -752,7 +752,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _StrategyTableName;
                 string searchString = "ID = " + id;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 if (table.Rows.Count == 0)
                 {
@@ -761,7 +761,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     nr["Class"] = className;
                     nr["PortfolioID"] = -1;
                     table.Rows.Add(nr);
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
 
                 _mainTables.TryAdd(id, table);
@@ -787,12 +787,12 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     nr["Class"] = strategy.GetType().ToString();
                     nr["PortfolioID"] = strategy.Portfolio == null ? -1 : strategy.PortfolioID;
                     table.Rows.Add(nr);
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
 
                 DataRow row = rows[0];
                 row[name] = value;
-                Database.DB["Kernel"].UpdateDataTable(table);
+                Database.DB["Quant"].UpdateDataTable(table);
             }
         }
 
@@ -802,7 +802,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
             string searchString = string.Format("PortfolioID <> -1 AND (FinalDate>='{0:yyyy-MM-dd HH:mm:ss.fff}' OR FinalDate is Null) AND Strategy.ID = Portfolio.StrategyID AND ParentPortfolioID = -1", date);
             string targetString = "*";
-            DataTable table = Database.DB["Kernel"].GetDataTable(_StrategyTableName + ", " + SQLPortfolioFactory._portfolioTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_StrategyTableName + ", " + SQLPortfolioFactory._portfolioTableName, targetString, searchString);
 
             DataRowCollection rows = table.Rows;
 

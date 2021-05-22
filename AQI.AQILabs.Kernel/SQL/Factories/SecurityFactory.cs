@@ -78,7 +78,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "ID = " + instrument.ID;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_securityTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_securityTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
 
                 if (rows.Count == 0)
@@ -90,7 +90,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     r["ExchangeID"] = exchange == null ? 0 : exchange.ID;
                     r["PointSize"] = pointSize;
                     rows.Add(r);
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
 
                     Security s = FindSecurity(instrument);
 
@@ -114,7 +114,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _securityTableName;
                 string searchString = "ID = " + instrument.ID;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -153,7 +153,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _securityTableName;
                 string searchString = "Isin LIKE '" + isin + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -190,7 +190,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _securityTableName;
                 string searchString = "Isin LIKE '" + isin + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -216,12 +216,12 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
         {
             string searchString = "Isin LIKE '" + isin + "'";
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_isinTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_isinTableName, targetString, searchString);
             DataRowCollection rows = table.Rows;
             if (rows.Count == 0)
             {
                 int id = -1;
-                DataTable idtable = Database.DB["Kernel"].GetDataTable(_isinTableName, "MAX(ID)", null);
+                DataTable idtable = Database.DB["Quant"].GetDataTable(_isinTableName, "MAX(ID)", null);
                 foreach (DataRow ir in idtable.Rows)
                 {
                     id = (int)ir[0];
@@ -232,7 +232,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 r["ID"] = id;
                 r["Isin"] = isin;
                 table.Rows.Add(r);
-                Database.DB["Kernel"].UpdateDataTable(table);
+                Database.DB["Quant"].UpdateDataTable(table);
 
                 return id;
             }
@@ -249,7 +249,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _isinTableName;
                 string searchString = "ID = " + isin;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -277,7 +277,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _isinTableName;
                 string searchString = "Isin Like '" + isin + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -320,7 +320,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _securityTableName;
                 string searchString = "Sedol LIKE '" + sedol + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -357,7 +357,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _securityTableName;
                 string searchString = "Sedol LIKE '" + sedol + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -384,12 +384,12 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
         {
             string searchString = "Sedol LIKE '" + sedol + "'";
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_sedolTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_sedolTableName, targetString, searchString);
             DataRowCollection rows = table.Rows;
             if (rows.Count == 0)
             {
                 int id = -1;
-                DataTable idtable = Database.DB["Kernel"].GetDataTable(_sedolTableName, "MAX(ID)", null);
+                DataTable idtable = Database.DB["Quant"].GetDataTable(_sedolTableName, "MAX(ID)", null);
                 foreach (DataRow ir in idtable.Rows)
                 {
                     id = (int)ir[0];
@@ -401,7 +401,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 r["ID"] = id;
                 r["Sedol"] = sedol;
                 table.Rows.Add(r);
-                Database.DB["Kernel"].UpdateDataTable(table);
+                Database.DB["Quant"].UpdateDataTable(table);
 
                 return id;
             }
@@ -419,7 +419,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _sedolTableName;
                 string searchString = "ID = " + sedol;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -447,7 +447,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 string tableName = _sedolTableName;
                 string searchString = "Sedol Like '" + sedol + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -515,7 +515,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     string tableName = _corporateActionTableName;
                     string searchString = "InstrumentID = " + security.ID;
                     string targetString = null;
-                    DataTable table = Database.DB["Kernel"].GetDataTable(tableName, targetString, searchString);
+                    DataTable table = Database.DB["Quant"].GetDataTable(tableName, targetString, searchString);
 
                     DataRowCollection rows = table.Rows;
 
@@ -567,7 +567,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             catch { }
             string searchString = "ID = '" + action.ID + "'";
             string targetString = null;
-            DataTable table = Database.DB["Kernel"].GetDataTable(_corporateActionTableName, targetString, searchString);
+            DataTable table = Database.DB["Quant"].GetDataTable(_corporateActionTableName, targetString, searchString);
             DataRowCollection rows = table.Rows;
 
             if (rows.Count == 0)
@@ -584,7 +584,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 r["Type"] = action.Type;
 
                 rows.Add(r);
-                Database.DB["Kernel"].UpdateDataTable(table);
+                Database.DB["Quant"].UpdateDataTable(table);
             }
         }
 
@@ -616,7 +616,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = "InstrumentID = '" + security.ID + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_corporateActionTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_corporateActionTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
 
 
@@ -641,7 +641,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     }
                 }
 
-                Database.DB["Kernel"].UpdateDataTable(table);
+                Database.DB["Quant"].UpdateDataTable(table);
             }
         }
 
@@ -652,7 +652,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 ConcurrentDictionary<DateTime, List<CorporateAction>> result = null;
                 _corporateActions.TryRemove(security.ID, out result);
 
-                Database.DB["Kernel"].ExecuteCommand("DELETE FROM " + _corporateActionTableName + " WHERE InstrumentID = " + security.ID);
+                Database.DB["Quant"].ExecuteCommand("DELETE FROM " + _corporateActionTableName + " WHERE InstrumentID = " + security.ID);
             }
         }
         
@@ -671,7 +671,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row[name] = value;
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }
@@ -693,7 +693,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row.Delete();
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
                 Security outs = null;
                 _securityIdDB.TryRemove(security.ID, out outs);

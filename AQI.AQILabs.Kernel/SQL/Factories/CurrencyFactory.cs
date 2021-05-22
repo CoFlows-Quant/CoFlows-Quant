@@ -63,7 +63,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = null;// "Name LIKE '" + name + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
 
                 var lrows = from lrow in new LINQList<DataRow>(rows)
@@ -73,13 +73,13 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                 if (lrows.Count() == 0)
                 {
                     DataRow r = table.NewRow();
-                    int id = Database.DB["Kernel"].NextAvailableID(table.Rows, "ID");
+                    int id = Database.DB["Quant"].NextAvailableID(table.Rows, "ID");
                     r["ID"] = id;
                     r["Name"] = name;
                     r["Description"] = description;
                     r["CalendarID"] = calendar.ID;
                     rows.Add(r);
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
 
                     Currency ccy = new Currency(id, name, description, calendar.ID);
 
@@ -116,7 +116,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "Name LIKE '" + name + "'";
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -146,7 +146,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "ID = " + id;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -173,7 +173,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = null;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -197,7 +197,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = null;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -226,7 +226,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row[name] = value;
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }
@@ -276,7 +276,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
             {
                 string searchString = "CurrencyBuyID = " + buy.ID + " AND CurrencySellID = " + sell.ID;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
                 DataRowCollection rows = table.Rows;
 
                 if (rows.Count == 0)
@@ -286,7 +286,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
                     r["CurrencySellID"] = sell.ID;
                     r["FXInstrumentID"] = fxInstrument.ID;
                     rows.Add(r);
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
 
                     return new CurrencyPair(buy.ID, sell.ID, fxInstrument.ID);
                 }
@@ -303,7 +303,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "CurrencyBuyID = " + buy.ID + " AND CurrencySellID = " + sell.ID;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -337,7 +337,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                 string searchString = "FXInstrumentID = " + FXInstrument.ID;
                 string targetString = null;
-                DataTable table = Database.DB["Kernel"].GetDataTable(_mainTableName, targetString, searchString);
+                DataTable table = Database.DB["Quant"].GetDataTable(_mainTableName, targetString, searchString);
 
                 DataRowCollection rows = table.Rows;
                 if (rows.Count == 0)
@@ -378,7 +378,7 @@ namespace AQI.AQILabs.Kernel.Adapters.SQL.Factories
 
                     DataRow row = rows[0];
                     row[name] = value;
-                    Database.DB["Kernel"].UpdateDataTable(table);
+                    Database.DB["Quant"].UpdateDataTable(table);
                 }
             }
         }
