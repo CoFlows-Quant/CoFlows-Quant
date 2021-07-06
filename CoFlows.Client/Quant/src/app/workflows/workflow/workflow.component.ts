@@ -21,7 +21,12 @@ import * as CodeMirror from 'codemirror/lib/codemirror.js';
   selector: 'workflow-component',
   
   templateUrl: './workflow.component.html',
-  styleUrls: ['./workflow.component.scss']
+  styleUrls: ['./workflow.component.scss'],
+  styles: [`
+  :host >>> .CodeMirror {
+    height: auto;
+  }
+  `]
 })
 export class WorkflowComponent {
     rows = []
