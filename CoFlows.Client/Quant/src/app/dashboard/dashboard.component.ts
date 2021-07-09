@@ -32,7 +32,7 @@ export class DashboardComponent {
 
         this.coflows.Get('flow/servicedworkflows', data => {
             // console.log(data)
-            this.workflows = data
+            this.workflows = data.sort((n1,n2) => n1.Name > n2.Name)
 
             this.workflows.forEach(workflow => {
                 let wiid = workflow.ID + "--Queries"

@@ -92,8 +92,10 @@ export class MenuComponent {
                     state: 'workflow',
                     parameters: [element.ID],
                     name: element.Name
-                });
-            });
+                })
+            })
+
+            wp = wp.sort((n1,n2) => n1.name > n2.name ? 1 : -1)
 
             this.menu = this.menu_function(wp)
         })
